@@ -1,0 +1,2766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptive Surveillance Smart Storage System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-primary:   #060b14;
+            --bg-card:      #0d1526;
+            --bg-card-h:    #111e35;
+            --accent:       #00e5a0;
+            --accent-dim:   rgba(0,229,160,0.12);
+            --accent-glow:  rgba(0,229,160,0.35);
+            --red:          #ff3d3d;
+            --red-dim:      rgba(255,61,61,0.12);
+            --yellow:       #ffd700;
+            --yellow-dim:   rgba(255,215,0,0.12);
+            --blue:         #60a5fa;
+            --blue-dim:     rgba(96,165,250,0.12);
+            --purple:       #a855f7;
+            --purple-dim:   rgba(168,85,247,0.12);
+            --orange:       #f97316;
+            --orange-dim:   rgba(249,115,22,0.12);
+            --teal:         #22d3ee;
+            --teal-dim:     rgba(34,211,238,0.12);
+            --pink:         #f472b6;
+            --pink-dim:     rgba(244,114,182,0.12);
+            --txt:          #e8f0fe;
+            --txt2:         #8b9bb4;
+            --border:       rgba(0,229,160,0.12);
+            --border-h:     rgba(0,229,160,0.40);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--txt);
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 2px,
+                rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none; z-index: 0;
+        }
+
+        .z1 { position: relative; z-index: 1; }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            background: rgba(6,11,20,0.97);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            padding: 0.7rem 2rem;
+            position: sticky; top: 0; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .brand { display: flex; align-items: center; gap: 14px; }
+
+        .brand-icon {
+            width: 46px; height: 46px;
+            background: var(--accent-dim);
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent); font-size: 1.35rem;
+            box-shadow: 0 0 18px var(--accent-glow);
+        }
+
+        .brand-name { font-size: 1.05rem; font-weight: 700; letter-spacing: .03em; }
+        .brand-sub  { font-size: .63rem; color: var(--txt2); letter-spacing: .12em; text-transform: uppercase; margin-top: 1px; }
+
+        .topbar-right { display: flex; align-items: center; gap: 14px; }
+
+        .live-date  { font-size: .72rem; color: var(--txt2); font-family: 'Courier New', monospace; }
+        .live-clock { font-size: .9rem;  color: var(--txt);  font-family: 'Courier New', monospace; font-weight: 600; }
+
+        .status-badge {
+            font-size: .72rem; color: var(--accent);
+            border: 1px solid var(--accent); border-radius: 20px;
+            padding: 4px 12px; background: var(--accent-dim);
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--accent); animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%,100% { opacity:1; box-shadow: 0 0 6px var(--accent); }
+            50%      { opacity:.3; box-shadow: none; }
+        }
+
+        /* ── THREAT BANNER ── */
+        .threat-banner {
+            padding: .6rem 2rem;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            background: rgba(13,21,38,0.6);
+            transition: background .5s;
+        }
+
+        .threat-left { display: flex; align-items: center; gap: 12px; }
+        .threat-icon { font-size: 1.1rem; }
+        .threat-label { font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+        .threat-desc  { font-size: .7rem; color: var(--txt2); margin-top: 1px; }
+
+        .threat-pill {
+            font-size: .7rem; font-weight: 700;
+            padding: 4px 14px; border-radius: 20px;
+            letter-spacing: .12em; text-transform: uppercase;
+        }
+
+        /* ── LAYOUT ── */
+        .wrap { max-width: 1520px; margin: 0 auto; padding: 1.8rem 1.5rem 0; }
+
+        .sec-label {
+            font-size: .7rem; font-weight: 700;
+            letter-spacing: .14em; text-transform: uppercase;
+            color: var(--accent);
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 1rem;
+        }
+        .sec-label::after { content:''; flex:1; height:1px; background: var(--border); }
+
+        /* ── STAT CARDS ── */
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.2rem;
+            transition: all .3s; position: relative; overflow: hidden;
+            height: 100%;
+        }
+        .stat-card::after {
+            content:''; position:absolute; top:0; left:0; right:0; height:2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity:0; transition: opacity .3s;
+        }
+        .stat-card:hover {
+            border-color: var(--border-h); background: var(--bg-card-h);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 32px rgba(0,229,160,.1);
+        }
+        .stat-card:hover::after { opacity:1; }
+
+        .stat-ico {
+            width: 42px; height: 42px; border-radius: 11px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.05rem; margin-bottom: .8rem;
+        }
+        .ico-g { background: var(--accent-dim);  color: var(--accent); }
+        .ico-b { background: var(--blue-dim);     color: var(--blue); }
+        .ico-y { background: var(--yellow-dim);   color: var(--yellow); }
+        .ico-r { background: var(--red-dim);      color: var(--red); }
+        .ico-p { background: var(--purple-dim);   color: var(--purple); }
+        .ico-o { background: var(--orange-dim);   color: var(--orange); }
+        .ico-t { background: var(--teal-dim);     color: var(--teal); }
+        .ico-pk{ background: var(--pink-dim);     color: var(--pink); }
+
+        .stat-val { font-size: 1.8rem; font-weight: 700; line-height: 1; margin-bottom: .2rem; }
+        .stat-lbl { font-size: .69rem; color: var(--txt2); text-transform: uppercase; letter-spacing: .08em; }
+        .stat-sub { font-size: .66rem; color: var(--txt2); margin-top: .3rem; }
+
+        /* Mini sparkline bar inside stat card */
+        .stat-mini-bar {
+            margin-top: .55rem; height: 3px; border-radius: 3px;
+            background: rgba(255,255,255,0.06); overflow: hidden;
+        }
+        .stat-mini-fill { height: 100%; border-radius: 3px; transition: width .6s; }
+
+        /* ── SYSTEM STATUS BAR ── */
+        .sys-bar {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px; padding: .75rem 1.4rem;
+            display: flex; gap: 2rem; flex-wrap: wrap; align-items: center;
+        }
+        .sys-item { display: flex; align-items: center; gap: 7px; font-size: .74rem; }
+        .sys-item i { font-size: .72rem; color: var(--accent); }
+        .sys-key { color: var(--txt2); }
+        .sys-val { color: var(--txt); font-weight: 600; }
+        .sys-ok  { color: var(--accent); }
+
+        /* ── CHART CARDS ── */
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.2rem; height: 100%;
+        }
+        .chart-head {
+            font-size: .78rem; font-weight: 600; margin-bottom: .9rem;
+            color: var(--txt); display: flex; align-items: center; gap: 7px;
+            justify-content: space-between;
+        }
+        .chart-head-left { display: flex; align-items: center; gap: 7px; }
+        .chart-head i { color: var(--accent); }
+        .chart-badge {
+            font-size: .6rem; padding: 2px 8px; border-radius: 10px;
+            background: var(--accent-dim); color: var(--accent);
+            border: 1px solid var(--border); font-weight: 700;
+        }
+
+        /* ── ALERTS PANEL ── */
+        .alerts-panel {
+            display: flex; gap: 10px; overflow-x: auto;
+            padding-bottom: 6px; margin-bottom: 1.6rem;
+        }
+        .alerts-panel::-webkit-scrollbar { height: 3px; }
+        .alerts-panel::-webkit-scrollbar-thumb { background: var(--border-h); border-radius: 3px; }
+
+        .alert-chip {
+            flex: 0 0 auto;
+            background: var(--bg-card); border: 1px solid var(--red);
+            border-radius: 12px; padding: .65rem 1rem;
+            display: flex; align-items: center; gap: 10px;
+            cursor: pointer; transition: all .2s; min-width: 200px;
+        }
+        .alert-chip:hover { background: var(--red-dim); transform: translateY(-2px); }
+        .alert-chip-ico {
+            width: 34px; height: 34px; border-radius: 8px;
+            background: var(--red-dim); color: var(--red);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; flex-shrink: 0;
+        }
+        .alert-chip-id { font-size: .75rem; font-weight: 700; color: var(--red); }
+        .alert-chip-time { font-size: .67rem; color: var(--txt2); }
+        .alert-chip-info { font-size: .66rem; color: var(--txt2); margin-top: 2px; }
+
+        .no-alerts {
+            font-size: .78rem; color: var(--txt2); padding: .6rem 0;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .no-alerts i { color: var(--accent); }
+
+        /* ── FILTER BAR ── */
+        .filter-row {
+            display: flex; justify-content: space-between;
+            align-items: center; flex-wrap: wrap; gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .search-box {
+            background: var(--bg-card); border: 1px solid var(--border);
+            color: var(--txt); border-radius: 8px;
+            padding: 5px 11px; font-size: .78rem; outline: none; width: 170px;
+            transition: border-color .2s;
+        }
+        .search-box:focus { border-color: var(--accent); }
+        .search-box::placeholder { color: var(--txt2); }
+
+        .fsel {
+            background: var(--bg-card); border: 1px solid var(--border);
+            color: var(--txt); border-radius: 8px;
+            padding: 5px 11px; font-size: .78rem; outline: none; cursor: pointer;
+        }
+        .fsel:focus { border-color: var(--accent); }
+        .fsel option { background: var(--bg-card); }
+
+        .export-btn {
+            background: var(--blue-dim); border: 1px solid var(--blue);
+            color: var(--blue); border-radius: 8px; padding: 6px 13px;
+            font-size: .78rem; cursor: pointer; transition: all .2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .export-btn:hover { background: var(--blue); color: var(--bg-primary); }
+
+        .merge-btn {
+            background: var(--accent-dim); border: 1px solid var(--accent);
+            color: var(--accent); border-radius: 8px; padding: 6px 13px;
+            font-size: .78rem; cursor: pointer; transition: all .2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .merge-btn:hover:not(:disabled) {
+            background: var(--accent); color: var(--bg-primary);
+            box-shadow: 0 0 14px var(--accent-glow);
+        }
+        .merge-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+        .count-badge {
+            background: var(--bg-card); border: 1px solid var(--border);
+            color: var(--txt2); border-radius: 8px; padding: 6px 12px;
+            font-size: .75rem; display: flex; align-items: center; gap: 5px;
+        }
+        .count-badge span { color: var(--txt); font-weight: 700; }
+
+        /* ── EVENT CARDS ── */
+        .event-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; overflow: hidden;
+            transition: all .3s; cursor: pointer; position: relative;
+        }
+        .event-card:hover {
+            border-color: var(--border-h);
+            transform: translateY(-5px);
+            box-shadow: 0 14px 44px rgba(0,229,160,.13);
+        }
+        .event-card.thr-high { border-left: 3px solid var(--red); }
+        .event-card.thr-med  { border-left: 3px solid var(--yellow); }
+        .event-card.thr-low  { border-left: 3px solid var(--accent); }
+
+        .vid-wrap { position: relative; background: #000; aspect-ratio: 16/9; }
+        .vid-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .evt-badge {
+            position: absolute; top: 9px; left: 9px;
+            background: rgba(6,11,20,.85); border: 1px solid var(--accent);
+            color: var(--accent); font-size: .62rem; font-weight: 700;
+            padding: 3px 8px; border-radius: 20px; backdrop-filter: blur(4px);
+        }
+
+        .thr-badge {
+            position: absolute; top: 9px; right: 9px;
+            font-size: .6rem; font-weight: 700;
+            padding: 3px 8px; border-radius: 20px; backdrop-filter: blur(4px);
+        }
+        .thr-badge.high { background: rgba(255,61,61,.85);  color: #fff; }
+        .thr-badge.med  { background: rgba(255,215,0,.85);  color: #000; }
+        .thr-badge.low  { background: rgba(0,229,160,.85);  color: #000; }
+
+        .del-overlay {
+            position: absolute; bottom: 9px; right: 9px;
+            width: 28px; height: 28px; border-radius: 6px;
+            background: rgba(255,61,61,.15); border: 1px solid rgba(255,61,61,.5);
+            color: var(--red); display: flex; align-items: center; justify-content: center;
+            font-size: .72rem; opacity: 0; transition: opacity .2s;
+            backdrop-filter: blur(4px); z-index: 2;
+        }
+        .event-card:hover .del-overlay { opacity: 1; }
+        .del-overlay:hover { background: var(--red) !important; color: #fff; }
+
+        .play-overlay {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,.4); opacity: 0; transition: opacity .2s;
+        }
+        .play-overlay i {
+            font-size: 2.6rem; color: var(--accent);
+            filter: drop-shadow(0 0 12px var(--accent-glow));
+        }
+        .event-card:hover .play-overlay { opacity: 1; }
+
+        .evt-meta { padding: .8rem 1rem 1rem; }
+        .evt-top  { display: flex; justify-content: space-between; align-items: flex-start; }
+        .evt-time { font-size: .85rem; font-weight: 600; }
+        .evt-date { font-size: .67rem; color: var(--txt2); margin-top: 1px; }
+        .evt-score-pill {
+            font-size: .6rem; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+            background: var(--accent-dim); color: var(--accent); border: 1px solid var(--border);
+        }
+
+        .evt-stats { display: flex; gap: .8rem; margin-top: .5rem; flex-wrap: wrap; }
+        .e-stat { display: flex; align-items: center; gap: 5px; font-size: .74rem; }
+        .e-stat i { font-size: .67rem; }
+
+        .c-blue   { color: var(--blue); }
+        .c-green  { color: var(--accent); }
+        .c-yellow { color: var(--yellow); }
+        .c-red    { color: var(--red); }
+        .c-dim    { color: var(--txt2); }
+        .c-orange { color: var(--orange); }
+
+        .threat-score-row { margin-top: .6rem; }
+        .threat-score-lbl {
+            display: flex; justify-content: space-between;
+            font-size: .63rem; color: var(--txt2); margin-bottom: 3px;
+        }
+        .threat-bg {
+            background: rgba(255,255,255,0.06); border-radius: 4px;
+            height: 4px; overflow: hidden;
+        }
+        .threat-fill { height: 100%; border-radius: 4px; transition: width .5s; }
+
+        .motion-bg {
+            background: rgba(255,215,0,.09); border-radius: 4px;
+            height: 3px; margin-top: .6rem; overflow: hidden;
+        }
+        .motion-fill { height: 100%; background: var(--yellow); border-radius: 4px; transition: width .5s; }
+
+        /* ── EMPTY STATE ── */
+        .empty { text-align: center; padding: 3.5rem 1rem; color: var(--txt2); }
+        .empty i { font-size: 3rem; color: var(--border-h); display: block; margin-bottom: .8rem; }
+        .empty p  { font-size: .88rem; line-height: 1.6; }
+
+        /* ── MODAL ── */
+        .modal-content {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px;
+        }
+        .modal-header { border-bottom: 1px solid var(--border); padding: .9rem 1.4rem; }
+        .modal-title  { color: var(--txt); font-size: .95rem; font-weight: 600; }
+        .btn-close     { filter: invert(1); }
+
+        #modalVideo { width: 100%; border-radius: 8px; background: #000; display: block; }
+
+        .modal-stats {
+            display: grid; grid-template-columns: repeat(5,1fr);
+            gap: .7rem; margin-top: 1rem;
+        }
+        .modal-stats-2 {
+            display: grid; grid-template-columns: repeat(5,1fr);
+            gap: .7rem; margin-top: .7rem;
+        }
+        .m-stat {
+            background: var(--bg-primary); border: 1px solid var(--border);
+            border-radius: 10px; padding: .7rem; text-align: center;
+        }
+        .m-val { font-size: 1rem; font-weight: 700; color: var(--accent); }
+        .m-lbl { font-size: .63rem; color: var(--txt2); text-transform: uppercase; letter-spacing: .07em; margin-top: 2px; }
+
+        .modal-analysis {
+            margin-top: 1rem; background: var(--bg-primary); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1rem;
+        }
+        .anal-head { font-size: .72rem; font-weight: 700; color: var(--accent);
+            letter-spacing: .1em; text-transform: uppercase; margin-bottom: .7rem; }
+        .anal-row { display: flex; align-items: center; gap: 10px; margin-bottom: .5rem; }
+        .anal-key { font-size: .72rem; color: var(--txt2); width: 130px; flex-shrink: 0; }
+        .anal-bar-wrap { flex: 1; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+        .anal-bar-fill { height: 100%; border-radius: 3px; transition: width .6s; }
+        .anal-val { font-size: .72rem; font-weight: 600; color: var(--txt); width: 50px; text-align: right; }
+
+        /* ── TOAST ── */
+        .toast-wrap {
+            position: fixed; bottom: 24px; right: 24px;
+            display: flex; flex-direction: column; gap: 8px; z-index: 9999;
+        }
+        .toast-item {
+            padding: 12px 18px; border-radius: 10px; font-size: .82rem;
+            animation: toastIn .3s ease; max-width: 360px;
+        }
+        .toast-ok  { background: rgba(0,229,160,.14); border: 1px solid var(--accent); color: var(--accent); }
+        .toast-err { background: rgba(255,61,61,.14);  border: 1px solid var(--red);    color: var(--red); }
+        @keyframes toastIn {
+            from { transform: translateX(80px); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
+        }
+
+        /* ── TOTAL FOOTAGE PANEL ── */
+        .footage-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--accent);
+            border-radius: 16px; padding: 1.4rem 1.8rem;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1.4rem; flex-wrap: wrap;
+            box-shadow: 0 0 24px rgba(0,229,160,0.08);
+        }
+        .footage-info { display: flex; align-items: center; gap: 1.2rem; }
+        .footage-ico {
+            width: 54px; height: 54px; border-radius: 14px; flex-shrink: 0;
+            background: var(--accent-dim); border: 1px solid var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: var(--accent);
+            box-shadow: 0 0 18px var(--accent-glow);
+        }
+        .footage-title { font-size: .95rem; font-weight: 700; color: var(--txt); }
+        .footage-desc  { font-size: .74rem; color: var(--txt2); margin-top: 3px; }
+        .footage-stats { display: flex; gap: 1.4rem; flex-wrap: wrap; }
+        .footage-stat  { text-align: center; }
+        .footage-stat-val { font-size: 1.25rem; font-weight: 700; color: var(--accent); }
+        .footage-stat-lbl { font-size: .62rem; color: var(--txt2); text-transform: uppercase; letter-spacing: .08em; }
+
+        .merge-action-btn {
+            background: var(--accent); color: var(--bg-primary);
+            border: none; border-radius: 10px; padding: 10px 22px;
+            font-size: .85rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+            transition: all .2s; white-space: nowrap;
+            box-shadow: 0 0 18px var(--accent-glow);
+        }
+        .merge-action-btn:hover:not(:disabled) {
+            background: #00ffb3; box-shadow: 0 0 28px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+        .merge-action-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .rewatch-btn {
+            background: var(--blue-dim); border: 1px solid var(--blue);
+            color: var(--blue); border-radius: 10px; padding: 10px 18px;
+            font-size: .82rem; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; gap: 7px; transition: all .2s;
+        }
+        .rewatch-btn:hover { background: var(--blue); color: var(--bg-primary); }
+
+        /* ── MERGED VIDEO MODAL ── */
+        #mergedModal .modal-content { background: #050a10; border-color: var(--accent); border-radius: 20px; }
+        #mergedModal .modal-header  { border-bottom-color: var(--border); padding: 1rem 1.5rem; }
+        #mergedModal .modal-body    { padding: 0 1.5rem 1.5rem; }
+        #mergedVideo { width:100%; border-radius:10px; background:#000; display:block; max-height:70vh; }
+        .merged-meta {
+            display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;
+            padding: .9rem 1.1rem;
+            background: rgba(0,229,160,0.05); border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .merged-meta-item { display: flex; align-items: center; gap: 7px; font-size: .78rem; }
+        .merged-meta-item i { color: var(--accent); font-size: .72rem; }
+        .merged-meta-item span { color: var(--txt2); }
+        .merged-meta-item strong { color: var(--txt); }
+
+        /* ── STORAGE PANEL ── */
+        .storage-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--teal);
+            border-radius: 16px; padding: 1.4rem 1.8rem;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1.6rem; flex-wrap: wrap;
+            box-shadow: 0 0 28px rgba(34,211,238,0.07);
+        }
+        .storage-left { display: flex; align-items: center; gap: 1.2rem; flex-shrink: 0; }
+        .storage-ico {
+            width: 54px; height: 54px; border-radius: 14px; flex-shrink: 0;
+            background: var(--teal-dim); border: 1px solid var(--teal);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: var(--teal);
+            box-shadow: 0 0 18px rgba(34,211,238,0.2);
+        }
+        .storage-main-val { font-size: 1.7rem; font-weight: 700; color: var(--teal); line-height: 1; }
+        .storage-main-lbl { font-size: .7rem; color: var(--txt2); margin-top: 4px; text-transform: uppercase; letter-spacing: .08em; }
+        .storage-stats { display: flex; gap: 1.6rem; flex-wrap: wrap; }
+        .storage-stat { text-align: center; }
+        .storage-stat-val { font-size: 1.2rem; font-weight: 700; color: var(--teal); }
+        .storage-stat-lbl { font-size: .62rem; color: var(--txt2); text-transform: uppercase; letter-spacing: .08em; margin-top: 2px; }
+        .storage-bar-wrap { flex: 1; min-width: 220px; }
+        .storage-bar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .45rem; }
+        .storage-bar-title { font-size: .72rem; color: var(--txt2); }
+        .storage-bar-pct { font-size: .75rem; font-weight: 700; color: var(--teal); }
+        .storage-bar-bg { background: rgba(255,255,255,0.06); border-radius: 6px; height: 8px; overflow: hidden; }
+        .storage-bar-fill { height: 100%; border-radius: 6px; background: var(--teal); transition: width .6s, background .4s; }
+        .storage-bar-foot { display: flex; justify-content: space-between; margin-top: .35rem; font-size: .62rem; color: var(--txt2); }
+
+        /* ── FOOTER ── */
+        .footer {
+            border-top: 1px solid var(--border); margin-top: 2.5rem;
+            padding: 1rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 8px; color: var(--txt2); font-size: .71rem;
+        }
+        .footer-brand { display: flex; align-items: center; gap: 8px; }
+        .footer-brand i { color: var(--accent); }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-h); border-radius: 3px; }
+
+        @media (max-width: 576px) {
+            .topbar { padding: .7rem 1rem; }
+            .brand-name { font-size: .88rem; }
+            .wrap { padding: 1.2rem 1rem 0; }
+            .modal-stats, .modal-stats-2 { grid-template-columns: repeat(3,1fr); }
+            .threat-banner { padding: .55rem 1rem; }
+            .sys-bar { gap: 1rem; }
+        }
+
+        /* ══ PREMIUM REDESIGN ADDITIONS ══ */
+
+        /* ── LIVE FEED SECTION ── */
+        .live-section {
+            display: grid; grid-template-columns: 1fr 360px;
+            gap: 1.2rem; padding: 1rem 2rem;
+            background: rgba(6,11,20,0.75);
+            border-bottom: 1px solid var(--border);
+            max-width: 1520px; margin: 0 auto;
+        }
+        @media (max-width: 700px) { .live-section { grid-template-columns: 1fr; padding: 1rem; } }
+
+        .live-feed-wrap {
+            background: #000; border-radius: 14px;
+            border: 1px solid var(--border);
+            aspect-ratio: 16/9; position: relative; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .live-feed-offline {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: .7rem; height: 100%; width: 100%;
+            background: linear-gradient(135deg, #050a15 0%, #0a1628 100%);
+        }
+        .live-feed-offline > i { font-size: 2.5rem; color: var(--border-h); }
+        .live-feed-offline .off-title { font-size: .88rem; font-weight: 600; color: var(--txt); }
+        .live-feed-offline .off-sub { font-size: .68rem; color: var(--txt2); }
+        .live-scan-line {
+            position: absolute; inset: 0; pointer-events: none; z-index: 1;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 2px,
+                rgba(0,229,160,0.018) 2px, rgba(0,229,160,0.018) 4px
+            );
+        }
+        .live-overlay-tl { position: absolute; top: 9px; left: 9px; display: flex; gap: 5px; z-index: 2; }
+        .live-overlay-tr { position: absolute; top: 9px; right: 9px; z-index: 2; }
+        .live-overlay-bl { position: absolute; bottom: 9px; left: 9px; z-index: 2; }
+        .live-badge {
+            background: rgba(255,61,61,0.9); color: #fff;
+            font-size: .58rem; font-weight: 800;
+            padding: 3px 7px; border-radius: 3px;
+            letter-spacing: .12em; animation: blink 1.5s infinite;
+        }
+        .live-badge.offline { background: rgba(80,80,80,0.75); animation: none; }
+        .live-fps, .live-time, .live-bottom-tag {
+            background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+            font-size: .62rem; padding: 3px 8px; border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .live-fps   { color: var(--accent); }
+        .live-time  { color: var(--txt); }
+        .live-bottom-tag { color: var(--txt2); }
+
+        /* ── AI DETECTION PANEL ── */
+        .ai-panel { display: flex; flex-direction: column; gap: .55rem; }
+        .ai-panel-hdr {
+            font-size: .68rem; font-weight: 700;
+            letter-spacing: .12em; text-transform: uppercase;
+            color: var(--accent); display: flex; align-items: center; gap: 8px;
+            margin-bottom: .1rem;
+        }
+        .ai-row {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 9px; padding: .6rem .9rem;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: border-color .25s;
+        }
+        .ai-row:hover { border-color: var(--border-h); }
+        .ai-key { font-size: .67rem; color: var(--txt2); display: flex; align-items: center; gap: 6px; }
+        .ai-key i { font-size: .6rem; color: var(--accent); width: 11px; }
+        .ai-val { font-size: .78rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+
+        /* ── SYSTEM ARCHITECTURE ── */
+        .arch-panel {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 1rem 1.4rem;
+            margin-bottom: 1.6rem; overflow-x: auto;
+        }
+        .arch-hdr {
+            font-size: .68rem; font-weight: 700;
+            letter-spacing: .12em; text-transform: uppercase;
+            color: var(--accent); margin-bottom: .9rem;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .arch-flow { display: flex; align-items: center; gap: 0; min-width: 680px; }
+        .arch-node {
+            background: var(--bg-primary); border: 1px solid var(--border);
+            border-radius: 10px; padding: .55rem .8rem;
+            text-align: center; flex: 1; transition: all .3s;
+        }
+        .arch-node:hover { border-color: var(--accent); box-shadow: 0 0 14px rgba(0,229,160,0.12); }
+        .arch-node-ico { font-size: 1rem; color: var(--accent); margin-bottom: .25rem; }
+        .arch-node-name { font-size: .63rem; font-weight: 700; color: var(--txt); white-space: nowrap; }
+        .arch-node-sub { font-size: .56rem; color: var(--txt2); margin-top: 1px; }
+        .arch-arrow { color: var(--accent); font-size: .75rem; flex-shrink: 0; padding: 0 .25rem; opacity: .45; }
+
+        /* ── EIS FORMULA DISPLAY ── */
+        .eis-formula-card {
+            background: var(--bg-card); border: 1px solid rgba(0,229,160,0.28);
+            border-radius: 14px; padding: .9rem 1.4rem;
+            margin-bottom: .9rem; display: flex;
+            align-items: center; gap: 1.5rem; flex-wrap: wrap;
+            box-shadow: 0 0 20px rgba(0,229,160,0.05);
+        }
+        .eis-formula-txt {
+            font-size: 1.1rem; font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--txt); letter-spacing: .04em; white-space: nowrap;
+        }
+        .eis-alpha { color: var(--accent); }
+        .eis-beta  { color: var(--blue); }
+        .eis-gamma { color: var(--yellow); }
+        .eis-meter { flex: 1; min-width: 180px; }
+        .eis-meter-track {
+            height: 7px;
+            background: linear-gradient(90deg,
+                rgba(0,229,160,.12) 0%, rgba(255,215,0,.12) 50%, rgba(255,61,61,.12) 100%);
+            border-radius: 6px; overflow: hidden; border: 1px solid var(--border);
+        }
+        .eis-meter-fill { height: 100%; border-radius: 6px; transition: width .8s, background .5s; background: var(--accent); }
+        .eis-meter-lbl {
+            display: flex; justify-content: space-between;
+            font-size: .62rem; color: var(--txt2); margin-top: .3rem;
+        }
+        .eis-params { display: flex; gap: .9rem; font-size: .63rem; flex-wrap: wrap; align-items: center; }
+        .eis-param-key { color: var(--txt2); }
+        .eis-param-val { font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+
+        /* ── DETECTION TIMELINE ── */
+        .timeline-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.1rem 1.4rem; margin-bottom: 1.6rem;
+        }
+        .timeline-hdr {
+            font-size: .68rem; font-weight: 700;
+            letter-spacing: .1em; text-transform: uppercase;
+            color: var(--txt); margin-bottom: .9rem;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .timeline-hdr i { color: var(--accent); }
+        .tl-event { display: flex; gap: .9rem; align-items: flex-start; }
+        .tl-spine { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; padding-top: 2px; }
+        .tl-dot {
+            width: 9px; height: 9px; border-radius: 50%;
+            background: var(--accent); border: 2px solid var(--bg-card);
+            box-shadow: 0 0 7px var(--accent-glow);
+        }
+        .tl-dot.high { background: var(--red);    box-shadow: 0 0 7px rgba(255,61,61,.4); }
+        .tl-dot.med  { background: var(--yellow); box-shadow: 0 0 7px rgba(255,215,0,.3); }
+        .tl-line { width: 1px; flex: 1; background: var(--border); min-height: 18px; margin: 2px 0; }
+        .tl-content { flex: 1; padding-bottom: .7rem; }
+        .tl-time { font-size: .68rem; font-weight: 700; color: var(--txt); font-family: 'JetBrains Mono', monospace; }
+        .tl-desc { font-size: .63rem; color: var(--txt2); margin-top: 2px; }
+        .tl-tags { display: flex; gap: 4px; margin-top: .28rem; flex-wrap: wrap; }
+        .tl-tag {
+            font-size: .56rem; font-weight: 700; padding: 1px 6px; border-radius: 7px;
+            background: var(--accent-dim); color: var(--accent); border: 1px solid var(--border);
+        }
+        .tl-tag.r { background: var(--red-dim); color: var(--red); border-color: rgba(255,61,61,.2); }
+        .tl-tag.y { background: var(--yellow-dim); color: var(--yellow); border-color: rgba(255,215,0,.2); }
+        .tl-empty { font-size: .78rem; color: var(--txt2); text-align: center; padding: 1rem 0; }
+
+        /* ── SYSTEM HEALTH ── */
+        .health-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: .7rem; margin-bottom: 1.6rem;
+        }
+        .health-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: .85rem; transition: all .3s;
+        }
+        .health-card:hover { border-color: var(--border-h); transform: translateY(-2px); }
+        .health-lbl {
+            font-size: .6rem; color: var(--txt2);
+            text-transform: uppercase; letter-spacing: .08em;
+            margin-bottom: .35rem; display: flex; align-items: center; gap: 5px;
+        }
+        .health-lbl i { color: var(--accent); font-size: .58rem; }
+        .health-val {
+            font-size: 1.35rem; font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--txt); line-height: 1;
+        }
+        .health-bar { height: 3px; background: rgba(255,255,255,.06); border-radius: 3px; margin-top: .45rem; overflow: hidden; }
+        .health-bar-fill { height: 100%; border-radius: 3px; transition: width .8s, background .5s; }
+        .health-sub { font-size: .58rem; color: var(--txt2); margin-top: .25rem; }
+
+        /* ── PROFESSIONAL FOOTER ── */
+        .footer-pro {
+            border-top: 1px solid var(--border); margin-top: 2.5rem;
+            padding: 1.1rem 2rem;
+            background: rgba(6,11,20,0.9);
+            backdrop-filter: blur(12px);
+        }
+        .footer-pro-inner {
+            max-width: 1520px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px;
+        }
+        .footer-left { display: flex; flex-direction: column; gap: 3px; }
+        .footer-proj { font-size: .78rem; font-weight: 700; color: var(--txt); display: flex; align-items: center; gap: 7px; }
+        .footer-proj i { color: var(--accent); }
+        .footer-meta-txt { font-size: .62rem; color: var(--txt2); }
+        .footer-right { display: flex; gap: 1.4rem; align-items: center; flex-wrap: wrap; }
+        .footer-ver { text-align: center; }
+        .footer-ver-num { font-size: .72rem; font-weight: 700; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+        .footer-ver-lbl { font-size: .56rem; color: var(--txt2); text-transform: uppercase; letter-spacing: .06em; }
+
+        /* ── SECTION DIVIDER ── */
+        .sec-divider { height: 1px; background: var(--border); margin: 1.6rem 0; }
+
+        /* ── ADAPTIVE SAVINGS PANEL ── */
+        .savings-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--accent);
+            border-radius: 16px; padding: 1.4rem 1.8rem;
+            box-shadow: 0 0 28px rgba(0,229,160,0.07);
+        }
+        .savings-header { display: flex; align-items: center; gap: .9rem; margin-bottom: 1.2rem; }
+        .savings-header-ico {
+            width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+            background: var(--accent-dim); border: 1px solid var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; color: var(--accent);
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+        .savings-stats-row {
+            display: flex; align-items: center; gap: .9rem; flex-wrap: wrap;
+        }
+        .savings-stat-box {
+            flex: 1; min-width: 110px; text-align: center;
+            background: var(--bg-primary); border: 1px solid var(--border);
+            border-radius: 12px; padding: .9rem .6rem; transition: all .3s;
+        }
+        .savings-stat-box:hover { border-color: var(--border-h); transform: translateY(-2px); }
+        .savings-stat-box.sv-highlight {
+            border-color: rgba(0,229,160,0.35);
+            box-shadow: 0 0 16px rgba(0,229,160,0.07);
+        }
+        .savings-stat-ico {
+            width: 34px; height: 34px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .85rem; margin: 0 auto .55rem;
+        }
+        .savings-stat-val { font-size: 1.45rem; font-weight: 800; line-height: 1; }
+        .savings-stat-lbl { font-size: .59rem; color: var(--txt2); text-transform: uppercase;
+            letter-spacing: .08em; margin-top: 4px; }
+        .savings-arrow { color: var(--txt2); font-size: .75rem; flex-shrink: 0; }
+        @media (max-width: 640px) {
+            .savings-stats-row { gap: .5rem; }
+            .savings-arrow { display: none; }
+            .savings-stat-box { min-width: calc(50% - .5rem); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── TOPBAR ── -->
+<div class="topbar z1">
+    <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div>
+            <div class="brand-name">Adaptive Surveillance Smart Storage System</div>
+            <div class="brand-sub">AI-Powered Real-Time Monitoring &nbsp;·&nbsp; YOLOv8 + OpenCV</div>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <div class="live-date" id="liveDate">—</div>
+        <div class="live-clock" id="liveClock">--:--:--</div>
+        <div class="status-badge"><span class="dot"></span>System Active</div>
+    </div>
+</div>
+
+<!-- ── THREAT BANNER ── -->
+<div class="threat-banner z1" id="threatBanner">
+    <div class="threat-left">
+        <span class="threat-icon" id="threatIcon"><i class="fa-solid fa-shield-check" style="color:var(--accent)"></i></span>
+        <div>
+            <div class="threat-label" id="threatLabel" style="color:var(--accent)">Threat Level: LOW</div>
+            <div class="threat-desc"  id="threatDesc">All systems operational — No significant threats detected</div>
+        </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:.68rem;color:var(--txt2)">Uptime: <strong id="uptimeTxt" style="color:var(--txt)">—</strong></span>
+        <span class="threat-pill" id="threatPill"
+              style="background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent)">SECURE</span>
+    </div>
+</div>
+
+<!-- ── LIVE FEED + AI DETECTION ── -->
+<div class="live-section z1">
+    <div>
+        <div class="ai-panel-hdr" style="margin-bottom:.65rem"><i class="fa-solid fa-video"></i> Live Camera Feed &nbsp;<span style="font-size:.6rem;color:var(--txt2);font-weight:400;text-transform:none;letter-spacing:0">· Activate by running main.py</span></div>
+        <div class="live-feed-wrap">
+            <div class="live-scan-line"></div>
+            <div class="live-feed-offline">
+                <i class="fa-solid fa-camera-slash"></i>
+                <div class="off-title">Camera Offline</div>
+                <div class="off-sub">Run <code style="background:rgba(0,229,160,0.1);padding:1px 6px;border-radius:4px;color:var(--accent)">main.py</code> to activate live surveillance</div>
+            </div>
+            <div class="live-overlay-tl">
+                <span class="live-badge offline" id="liveBadge">OFFLINE</span>
+                <span class="live-fps" id="liveFps">-- FPS</span>
+            </div>
+            <div class="live-overlay-tr">
+                <span class="live-time" id="liveOverlayTime">--:--:--</span>
+            </div>
+            <div class="live-overlay-bl">
+                <span class="live-bottom-tag" id="liveResTag">640 × 480 · H.264</span>
+            </div>
+        </div>
+    </div>
+    <div class="ai-panel">
+        <div class="ai-panel-hdr"><i class="fa-solid fa-microchip"></i> Real-Time AI Detection</div>
+        <div class="ai-row">
+            <span class="ai-key"><i class="fa-solid fa-person"></i> Persons Detected</span>
+            <span class="ai-val" id="aiPersons" style="color:var(--blue)">—</span>
+        </div>
+        <div class="ai-row">
+            <span class="ai-key"><i class="fa-solid fa-wave-square"></i> Motion Score</span>
+            <span class="ai-val" id="aiMotion" style="color:var(--yellow)">—</span>
+        </div>
+        <div class="ai-row">
+            <span class="ai-key"><i class="fa-solid fa-crosshairs"></i> Conf. Threshold</span>
+            <span class="ai-val" id="aiConf" style="color:var(--accent)">—</span>
+        </div>
+        <div class="ai-row">
+            <span class="ai-key"><i class="fa-solid fa-shield-halved"></i> Threat Level</span>
+            <span class="ai-val" id="aiThreat" style="color:var(--accent)">—</span>
+        </div>
+        <div class="ai-row">
+            <span class="ai-key"><i class="fa-solid fa-circle-dot"></i> Recording Status</span>
+            <span class="ai-val" id="aiRec" style="color:var(--txt2)">STANDBY</span>
+        </div>
+        <div class="ai-row">
+            <span class="ai-key"><i class="fa-solid fa-bolt"></i> Last Event EIS</span>
+            <span class="ai-val" id="aiEIS" style="color:var(--teal)">—</span>
+        </div>
+        <div class="ai-row">
+            <span class="ai-key"><i class="fa-solid fa-brain"></i> Model</span>
+            <span class="ai-val" style="color:var(--purple)">YOLOv8n</span>
+        </div>
+        <div class="ai-row">
+            <span class="ai-key"><i class="fa-solid fa-calendar"></i> Last Recorded</span>
+            <span class="ai-val" id="aiLastTs" style="color:var(--txt2);font-size:.65rem">—</span>
+        </div>
+    </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="wrap z1">
+
+    <!-- SYSTEM ARCHITECTURE -->
+    <div class="arch-panel">
+        <div class="arch-hdr"><i class="fa-solid fa-sitemap"></i> System Architecture Pipeline</div>
+        <div class="arch-flow">
+            <div class="arch-node">
+                <div class="arch-node-ico"><i class="fa-solid fa-camera"></i></div>
+                <div class="arch-node-name">Camera</div>
+                <div class="arch-node-sub">640×480 · 20fps</div>
+            </div>
+            <div class="arch-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+            <div class="arch-node">
+                <div class="arch-node-ico" style="color:var(--blue)"><i class="fa-solid fa-brain"></i></div>
+                <div class="arch-node-name">YOLOv8n</div>
+                <div class="arch-node-sub">Person Detection</div>
+            </div>
+            <div class="arch-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+            <div class="arch-node">
+                <div class="arch-node-ico" style="color:var(--yellow)"><i class="fa-solid fa-wave-square"></i></div>
+                <div class="arch-node-name">MOG2</div>
+                <div class="arch-node-sub">Motion Analysis</div>
+            </div>
+            <div class="arch-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+            <div class="arch-node">
+                <div class="arch-node-ico" style="color:var(--orange)"><i class="fa-solid fa-bolt"></i></div>
+                <div class="arch-node-name">EIS Engine</div>
+                <div class="arch-node-sub">αHC+βMS+γED</div>
+            </div>
+            <div class="arch-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+            <div class="arch-node">
+                <div class="arch-node-ico" style="color:var(--purple)"><i class="fa-solid fa-table"></i></div>
+                <div class="arch-node-name">Metadata CSV</div>
+                <div class="arch-node-sub">events_metadata</div>
+            </div>
+            <div class="arch-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+            <div class="arch-node">
+                <div class="arch-node-ico" style="color:var(--teal)"><i class="fa-solid fa-hard-drive"></i></div>
+                <div class="arch-node-name">Adaptive Storage</div>
+                <div class="arch-node-sub">Store / Compress</div>
+            </div>
+            <div class="arch-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+            <div class="arch-node" style="border-color:rgba(0,229,160,.35)">
+                <div class="arch-node-ico"><i class="fa-solid fa-chart-line"></i></div>
+                <div class="arch-node-name">Dashboard</div>
+                <div class="arch-node-sub">Flask · REST API</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS ROW 1 -->
+    <div class="sec-label mb-3"><i class="fa-solid fa-chart-simple"></i> Overview</div>
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3 col-xl">
+            <div class="stat-card">
+                <div class="stat-ico ico-g"><i class="fa-solid fa-video"></i></div>
+                <div class="stat-val" id="sEvents">0</div>
+                <div class="stat-lbl">Total Events</div>
+                <div class="stat-sub" id="sEventsDate">—</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfEvents" style="width:0%;background:var(--accent)"></div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl">
+            <div class="stat-card">
+                <div class="stat-ico ico-b"><i class="fa-solid fa-person"></i></div>
+                <div class="stat-val" id="sPersons">0</div>
+                <div class="stat-lbl">Persons Detected</div>
+                <div class="stat-sub" id="sAvgPersons">Avg: 0 / event</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfPersons" style="width:0%;background:var(--blue)"></div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl">
+            <div class="stat-card">
+                <div class="stat-ico ico-y"><i class="fa-solid fa-clock"></i></div>
+                <div class="stat-val" id="sDuration">0s</div>
+                <div class="stat-lbl">Total Duration</div>
+                <div class="stat-sub" id="sAvgDur">Avg: 0s / event</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfDur" style="width:0%;background:var(--yellow)"></div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl">
+            <div class="stat-card">
+                <div class="stat-ico ico-r"><i class="fa-solid fa-wave-square"></i></div>
+                <div class="stat-val" id="sMotion">0</div>
+                <div class="stat-lbl">Avg Motion Score</div>
+                <div class="stat-sub" id="sMotionMax">Max: 0</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfMotion" style="width:0%;background:var(--red)"></div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl">
+            <div class="stat-card">
+                <div class="stat-ico ico-p"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                <div class="stat-val" id="sPeakHour">--</div>
+                <div class="stat-lbl">Peak Activity Hour</div>
+                <div class="stat-sub" id="sPeakCount">Most events recorded</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfPeak" style="width:60%;background:var(--purple)"></div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl">
+            <div class="stat-card">
+                <div class="stat-ico ico-o"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="stat-val" id="sHighThr">0</div>
+                <div class="stat-lbl">High Threat Events</div>
+                <div class="stat-sub" id="sHighThrPct">0% of total</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfHighThr" style="width:0%;background:var(--orange)"></div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl">
+            <div class="stat-card">
+                <div class="stat-ico ico-t"><i class="fa-solid fa-calendar-check"></i></div>
+                <div class="stat-val" id="sDaysActive">0</div>
+                <div class="stat-lbl">Days Active</div>
+                <div class="stat-sub" id="sDaysRange">Monitoring period</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfDays" style="width:0%;background:var(--teal)"></div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xl">
+            <div class="stat-card">
+                <div class="stat-ico ico-pk"><i class="fa-solid fa-calendar-day"></i></div>
+                <div class="stat-val" id="sToday">0</div>
+                <div class="stat-lbl">Events Today</div>
+                <div class="stat-sub" id="sTodayPct">0% of total</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfToday" style="width:0%;background:var(--pink)"></div></div>
+            </div>
+        </div>
+    </div>
+<div class="row g-3 mb-3">
+
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-ico ico-g">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div class="stat-val" id="avgEIS">0</div>
+            <div class="stat-lbl">Average EIS</div>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-ico ico-r">
+                <i class="fa-solid fa-arrow-up"></i>
+            </div>
+            <div class="stat-val" id="highThreshold">0</div>
+            <div class="stat-lbl">High Threshold</div>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-ico ico-y">
+                <i class="fa-solid fa-arrow-down"></i>
+            </div>
+            <div class="stat-val" id="lowThreshold">0</div>
+            <div class="stat-lbl">Low Threshold</div>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-ico ico-b">
+                <i class="fa-solid fa-save"></i>
+            </div>
+            <div class="stat-val" id="keepCount">0</div>
+            <div class="stat-lbl">Keep Original</div>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-ico ico-p">
+                <i class="fa-solid fa-compress"></i>
+            </div>
+            <div class="stat-val" id="compressCount">0</div>
+            <div class="stat-lbl">Compressed</div>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-ico ico-o">
+                <i class="fa-solid fa-trash"></i>
+            </div>
+            <div class="stat-val" id="deleteCount">0</div>
+            <div class="stat-lbl">Deleted</div>
+        </div>
+    </div>
+
+</div>
+    <!-- SYSTEM STATUS -->
+    <div class="sec-label"><i class="fa-solid fa-microchip"></i> System Status</div>
+    <div class="sys-bar mb-4">
+        <div class="sys-item">
+            <i class="fa-solid fa-brain"></i>
+            <span class="sys-key">AI Model:</span>
+            <span class="sys-val">YOLOv8n</span>
+            <i class="fa-solid fa-circle-check sys-ok ms-1" style="font-size:.6rem"></i>
+        </div>
+        <div class="sys-item">
+            <i class="fa-solid fa-camera"></i>
+            <span class="sys-key">Camera:</span>
+            <span class="sys-val">640 × 480</span>
+            <i class="fa-solid fa-circle-check sys-ok ms-1" style="font-size:.6rem"></i>
+        </div>
+        <div class="sys-item">
+            <i class="fa-solid fa-bolt"></i>
+            <span class="sys-key">Detection Mode:</span>
+            <span class="sys-val">Person + Motion Hybrid</span>
+        </div>
+        <div class="sys-item">
+            <i class="fa-solid fa-hard-drive"></i>
+            <span class="sys-key">Storage Used:</span>
+            <span class="sys-val" id="storageTxt">— MB</span>
+        </div>
+        <div class="sys-item">
+            <i class="fa-solid fa-calendar-day"></i>
+            <span class="sys-key">Last Event:</span>
+            <span class="sys-val" id="lastEventTime">—</span>
+        </div>
+        <div class="sys-item">
+            <i class="fa-solid fa-rotate"></i>
+            <span class="sys-key">Auto-refresh in:</span>
+            <span class="sys-val" id="refreshTxt">30s</span>
+        </div>
+        <div class="sys-item ms-auto">
+            <i class="fa-solid fa-circle" style="color:var(--accent);font-size:.45rem;animation:blink 2s infinite"></i>
+            <span class="sys-ok">Operational</span>
+        </div>
+    </div>
+
+    <!-- STORAGE PANEL -->
+    <div class="sec-label"><i class="fa-solid fa-hard-drive"></i> Storage</div>
+    <div class="storage-panel mb-4">
+        <div class="storage-left">
+            <div class="storage-ico"><i class="fa-solid fa-database"></i></div>
+            <div>
+                <div class="storage-main-val" id="storagePanelVal">— MB</div>
+                <div class="storage-main-lbl">Total footage on disk</div>
+            </div>
+        </div>
+        <div class="storage-stats">
+            <div class="storage-stat">
+                <div class="storage-stat-val" id="storageClips">0</div>
+                <div class="storage-stat-lbl">Event Clips</div>
+            </div>
+            <div class="storage-stat">
+                <div class="storage-stat-val" id="storageAvg">— MB</div>
+                <div class="storage-stat-lbl">Avg per Clip</div>
+            </div>
+            <div class="storage-stat">
+                <div class="storage-stat-val" id="storageStatus" style="color:var(--teal)">OK</div>
+                <div class="storage-stat-lbl">Status</div>
+            </div>
+        </div>
+        <div class="storage-bar-wrap">
+            <div class="storage-bar-header">
+                <span class="storage-bar-title">Disk Usage &nbsp;(10 GB cap)</span>
+                <span class="storage-bar-pct" id="storagePct">0%</span>
+            </div>
+            <div class="storage-bar-bg">
+                <div class="storage-bar-fill" id="storageBarFill" style="width:0%"></div>
+            </div>
+            <div class="storage-bar-foot">
+                <span id="storageUsedLbl">0 MB used</span>
+                <span>10 GB max</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADAPTIVE SAVINGS -->
+    <div class="sec-label"><i class="fa-solid fa-piggy-bank"></i> Adaptive Savings</div>
+    <div class="savings-panel mb-4">
+        <div class="savings-header">
+            <div class="savings-header-ico"><i class="fa-solid fa-chart-pie"></i></div>
+            <div>
+                <div style="font-size:.9rem;font-weight:700;color:var(--txt)">Time &amp; Storage Saved</div>
+                <div style="font-size:.68rem;color:var(--txt2);margin-top:2px" id="savingsSubtitle">Loading session data…</div>
+            </div>
+        </div>
+        <div class="savings-stats-row">
+            <div class="savings-stat-box">
+                <div class="savings-stat-ico" style="background:var(--blue-dim);border:1px solid var(--blue)">
+                    <i class="fa-solid fa-video" style="color:var(--blue)"></i>
+                </div>
+                <div class="savings-stat-val" id="svMonTime" style="color:var(--blue)">—</div>
+                <div class="savings-stat-lbl">Camera Monitored</div>
+            </div>
+            <div class="savings-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+            <div class="savings-stat-box">
+                <div class="savings-stat-ico" style="background:var(--accent-dim);border:1px solid var(--accent)">
+                    <i class="fa-solid fa-circle-dot" style="color:var(--accent)"></i>
+                </div>
+                <div class="savings-stat-val" id="svRecTime" style="color:var(--accent)">—</div>
+                <div class="savings-stat-lbl">Activity Recorded</div>
+            </div>
+            <div class="savings-arrow"><i class="fa-solid fa-equals"></i></div>
+            <div class="savings-stat-box sv-highlight">
+                <div class="savings-stat-ico" style="background:var(--purple-dim);border:1px solid var(--purple)">
+                    <i class="fa-solid fa-clock" style="color:var(--purple)"></i>
+                </div>
+                <div class="savings-stat-val" id="svTimeSaved" style="color:var(--purple)">—%</div>
+                <div class="savings-stat-lbl">Time Saved</div>
+            </div>
+            <div class="savings-stat-box sv-highlight">
+                <div class="savings-stat-ico" style="background:var(--orange-dim);border:1px solid var(--orange)">
+                    <i class="fa-solid fa-hard-drive" style="color:var(--orange)"></i>
+                </div>
+                <div class="savings-stat-val" id="svStorageSaved" style="color:var(--orange)">~—%</div>
+                <div class="savings-stat-lbl">Storage Saved</div>
+            </div>
+        </div>
+        <!-- Activity vs Idle bar -->
+        <div style="margin-top:1.2rem">
+            <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--txt2);margin-bottom:.4rem">
+                <span>Activity recorded vs idle time (not saved)</span>
+                <span><span id="svRecPct" style="color:var(--accent);font-weight:700">—%</span> of camera time had activity</span>
+            </div>
+            <div style="height:14px;background:rgba(255,255,255,0.04);border-radius:7px;
+                        overflow:hidden;border:1px solid var(--border);position:relative">
+                <div id="svBarFill" style="height:100%;border-radius:7px;
+                     background:linear-gradient(90deg,var(--accent),var(--teal));
+                     transition:width .8s;width:0%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--txt2);margin-top:.32rem">
+                <span><span style="color:var(--accent)">▓</span> Human activity (saved to disk)</span>
+                <span><span style="color:rgba(255,255,255,0.15)">▓</span> Idle / no-person time (discarded)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- STORAGE OPTIMIZATION (Paper-Aligned: EIS = αHC + βMS + γED) -->
+    <div class="sec-label"><i class="fa-solid fa-bolt"></i> Storage Optimization</div>
+
+    <!-- EIS Formula Display -->
+    <div class="eis-formula-card">
+        <div>
+            <div class="eis-formula-txt">
+                EIS = <span class="eis-alpha">αHC</span> + <span class="eis-beta">βMS</span> + <span class="eis-gamma">γED</span>
+            </div>
+            <div class="eis-params" style="margin-top:.45rem">
+                <span class="eis-param-key">α =</span> <span class="eis-param-val eis-alpha">25</span>
+                <span class="eis-param-key" style="margin-left:.4rem">β =</span> <span class="eis-param-val eis-beta">1/4000</span>
+                <span class="eis-param-key" style="margin-left:.4rem">γ =</span> <span class="eis-param-val eis-gamma">0.5</span>
+                <span class="eis-param-key" style="margin-left:.6rem">T<sub>H</sub> =</span> <span class="eis-param-val" style="color:var(--accent)">60</span>
+                <span class="eis-param-key" style="margin-left:.4rem">T<sub>L</sub> =</span> <span class="eis-param-val" style="color:var(--yellow)">25</span>
+            </div>
+        </div>
+        <div class="eis-meter" style="max-width:280px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem">
+                <span style="font-size:.63rem;color:var(--txt2)">Avg EIS Score</span>
+                <span style="font-size:.8rem;font-weight:700;font-family:'JetBrains Mono',monospace" id="eisMeterVal">—</span>
+            </div>
+            <div class="eis-meter-track">
+                <div class="eis-meter-fill" id="eisMeterFill" style="width:0%"></div>
+            </div>
+            <div class="eis-meter-lbl">
+                <span style="color:var(--red)">Discard &lt;25</span>
+                <span style="color:var(--yellow)">Compress 25-59</span>
+                <span style="color:var(--accent)">Store ≥60</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-ico ico-g"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="stat-val" id="eisImportant">0</div>
+                <div class="stat-lbl">Store Events</div>
+                <div class="stat-sub" id="eisImportantPct">0% — EIS ≥ 60</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfImportant" style="width:0%;background:var(--accent)"></div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-ico ico-y"><i class="fa-solid fa-compress"></i></div>
+                <div class="stat-val" id="eisCompress">0</div>
+                <div class="stat-lbl">Compress Events</div>
+                <div class="stat-sub" id="eisCompressPct">0% — EIS 25–59</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfCompress" style="width:0%;background:var(--yellow)"></div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-ico ico-t"><i class="fa-solid fa-gauge-high"></i></div>
+                <div class="stat-val" id="eisAvg">0</div>
+                <div class="stat-lbl">Avg EIS Score</div>
+                <div class="stat-sub" style="font-style:italic">αHC + βMS + γED</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfEIS" style="width:0%;background:var(--teal)"></div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-ico ico-p"><i class="fa-solid fa-leaf"></i></div>
+                <div class="stat-val" id="storageSaved">—%</div>
+                <div class="stat-lbl">Est. Storage Saved</div>
+                <div class="stat-sub" id="storageSavedDesc">vs continuous recording</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfSaved" style="width:0%;background:var(--purple)"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Storage Comparison Row -->
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+            <div class="stat-card" style="border-color:rgba(255,61,61,0.25)">
+                <div class="stat-ico" style="background:rgba(255,61,61,0.12);color:var(--red)"><i class="fa-solid fa-film"></i></div>
+                <div class="stat-val" id="origStorageVal" style="color:var(--red)">— MB</div>
+                <div class="stat-lbl">Original Storage</div>
+                <div class="stat-sub">Continuous recording estimate</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfOrig" style="width:100%;background:var(--red)"></div></div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="stat-card" style="border-color:rgba(0,229,160,0.25)">
+                <div class="stat-ico ico-g"><i class="fa-solid fa-hard-drive"></i></div>
+                <div class="stat-val" id="optStorageVal" style="color:var(--accent)">— MB</div>
+                <div class="stat-lbl">Optimized Storage</div>
+                <div class="stat-sub">Actual event clips on disk</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfOpt" style="width:0%;background:var(--accent)"></div></div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="stat-card" style="border-color:rgba(168,85,247,0.25)">
+                <div class="stat-ico ico-p"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                <div class="stat-val" id="storageSavedBig" style="color:var(--purple)">—%</div>
+                <div class="stat-lbl">Storage Saved</div>
+                <div class="stat-sub" id="storageSavedBigDesc">Original vs Optimized</div>
+                <div class="stat-mini-bar"><div class="stat-mini-fill" id="mfSavedBig" style="width:0%;background:var(--purple)"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-8">
+            <div class="chart-card">
+                <div class="chart-head">
+                    <div class="chart-head-left"><i class="fa-solid fa-bolt"></i> Event Importance Score (EIS) per Event</div>
+                    <span class="chart-badge" id="badgeEISMax">Max EIS: 0</span>
+                </div>
+                <div style="font-size:.63rem;color:var(--txt2);margin-bottom:.6rem;display:flex;gap:14px">
+                    <span><span style="color:var(--accent)">■</span> Store (≥60)</span>
+                    <span><span style="color:var(--yellow)">■</span> Compress (25–59)</span>
+                    <span><span style="color:var(--red)">■</span> Discard (&lt;25)</span>
+                </div>
+                <canvas id="eisChart" height="130"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-card">
+                <div class="chart-head">
+                    <div class="chart-head-left"><i class="fa-solid fa-database"></i> Storage Decision</div>
+                </div>
+                <div style="max-width:200px;margin:0 auto">
+                    <canvas id="eisDonut" height="160"></canvas>
+                </div>
+                <div id="eisLegend" style="display:flex;justify-content:center;gap:12px;margin-top:.6rem;font-size:.7rem;color:var(--txt2)"></div>
+                <div style="margin-top:.8rem;padding:.6rem;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border);font-size:.67rem;color:var(--txt2);line-height:1.6">
+                    <div><span style="color:var(--accent)">α</span> = 25 &nbsp;·&nbsp; <span style="color:var(--blue)">β</span> = 1/4000 &nbsp;·&nbsp; <span style="color:var(--yellow)">γ</span> = 0.5</div>
+                    <div style="margin-top:2px">T<sub>H</sub> = 60 &nbsp;·&nbsp; T<sub>L</sub> = 25</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ANALYTICS CHARTS ROW 1 -->
+    <div class="sec-label"><i class="fa-solid fa-chart-bar"></i> Analytics</div>
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="chart-card">
+                <div class="chart-head">
+                    <div class="chart-head-left"><i class="fa-solid fa-person-walking"></i> Person Count per Event</div>
+                    <span class="chart-badge" id="badgeMaxPersons">Max: 0</span>
+                </div>
+                <canvas id="personChart" height="140"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-card">
+                <div class="chart-head">
+                    <div class="chart-head-left"><i class="fa-solid fa-stopwatch"></i> Duration per Event (sec)</div>
+                    <span class="chart-badge" id="badgeMaxDur">Max: 0s</span>
+                </div>
+                <canvas id="durationChart" height="140"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-card">
+                <div class="chart-head">
+                    <div class="chart-head-left"><i class="fa-solid fa-wave-square"></i> Motion Score Trend</div>
+                    <span class="chart-badge" id="badgeAvgMotion">Avg: 0</span>
+                </div>
+                <canvas id="motionChart" height="140"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ANALYTICS CHARTS ROW 2 -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-5">
+            <div class="chart-card">
+                <div class="chart-head">
+                    <div class="chart-head-left"><i class="fa-solid fa-clock"></i> Hourly Activity Distribution</div>
+                    <span class="chart-badge" id="badgePeakHour">Peak: --</span>
+                </div>
+                <canvas id="hourlyChart" height="130"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-card">
+                <div class="chart-head">
+                    <div class="chart-head-left"><i class="fa-solid fa-shield-halved"></i> Threat Level Breakdown</div>
+                </div>
+                <div style="max-width:220px;margin:0 auto">
+                    <canvas id="threatChart" height="160"></canvas>
+                </div>
+                <div id="threatLegend" style="display:flex;justify-content:center;gap:16px;margin-top:.6rem;font-size:.7rem;color:var(--txt2)"></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="chart-card">
+                <div class="chart-head">
+                    <div class="chart-head-left"><i class="fa-solid fa-gauge-high"></i> Threat Score Dist.</div>
+                </div>
+                <canvas id="scoreChart" height="160"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- HIGH-THREAT ALERTS -->
+    <div class="sec-label"><i class="fa-solid fa-bell"></i> Recent High-Threat Alerts</div>
+    <div class="alerts-panel" id="alertsPanel">
+        <div class="no-alerts"><i class="fa-solid fa-shield-check"></i> No high-threat events recorded yet.</div>
+    </div>
+
+    <!-- DETECTION TIMELINE + SYSTEM HEALTH -->
+    <div class="row g-3 mb-0">
+        <div class="col-md-7">
+            <div class="sec-label"><i class="fa-solid fa-timeline"></i> Detection Timeline</div>
+            <div class="timeline-card">
+                <div id="timelinePanel">
+                    <div class="tl-empty"><i class="fa-regular fa-clock"></i> No events recorded yet.</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="sec-label"><i class="fa-solid fa-server"></i> System Health</div>
+            <div class="health-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:0">
+                <div class="health-card">
+                    <div class="health-lbl"><i class="fa-solid fa-microchip"></i> CPU Usage</div>
+                    <div class="health-val" id="hCpuVal">—%</div>
+                    <div class="health-bar"><div class="health-bar-fill" id="hCpuBar" style="width:0%;background:var(--accent)"></div></div>
+                    <div class="health-sub" id="hCpuSub">Measuring…</div>
+                </div>
+                <div class="health-card">
+                    <div class="health-lbl"><i class="fa-solid fa-memory"></i> RAM Usage</div>
+                    <div class="health-val" id="hRamVal">—%</div>
+                    <div class="health-bar"><div class="health-bar-fill" id="hRamBar" style="width:0%;background:var(--blue)"></div></div>
+                    <div class="health-sub" id="hRamSub">Measuring…</div>
+                </div>
+                <div class="health-card">
+                    <div class="health-lbl"><i class="fa-solid fa-film"></i> Capture FPS</div>
+                    <div class="health-val" id="hFpsVal">— FPS</div>
+                    <div class="health-bar"><div class="health-bar-fill" id="hFpsBar" style="width:0%;background:var(--teal)"></div></div>
+                    <div class="health-sub" id="hFpsSub">Target: 20fps</div>
+                </div>
+                <div class="health-card">
+                    <div class="health-lbl"><i class="fa-solid fa-hard-drive"></i> Disk Used</div>
+                    <div class="health-val" id="hDiskVal">— MB</div>
+                    <div class="health-bar"><div class="health-bar-fill" id="hDiskBar" style="width:0%;background:var(--purple)"></div></div>
+                    <div class="health-sub" id="hDiskSub">of 10 GB cap</div>
+                </div>
+                <div class="health-card">
+                    <div class="health-lbl"><i class="fa-solid fa-brain"></i> YOLO Status</div>
+                    <div class="health-val" style="font-size:.9rem;color:var(--accent)">READY</div>
+                    <div class="health-bar"><div class="health-bar-fill" style="width:100%;background:var(--accent)"></div></div>
+                    <div class="health-sub">YOLOv8n · COCO-0</div>
+                </div>
+                <div class="health-card">
+                    <div class="health-lbl"><i class="fa-solid fa-camera"></i> Camera Status</div>
+                    <div class="health-val" style="font-size:.9rem;color:var(--txt2)">OFFLINE</div>
+                    <div class="health-bar"><div class="health-bar-fill" style="width:0%;background:var(--red)"></div></div>
+                    <div class="health-sub">Run main.py</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sec-divider"></div>
+
+    <!-- TOTAL FOOTAGE PANEL -->
+    <div class="sec-label"><i class="fa-solid fa-clapperboard"></i> Total Footage</div>
+    <div class="footage-panel mb-4">
+        <div class="footage-info">
+            <div class="footage-ico"><i class="fa-solid fa-film"></i></div>
+            <div>
+                <div class="footage-title">Complete Surveillance Recording</div>
+                <div class="footage-desc" id="footageDesc">
+                    Combine all event clips into one continuous video for a full session review
+                </div>
+            </div>
+        </div>
+        <div class="footage-stats" id="footageStats">
+            <div class="footage-stat">
+                <div class="footage-stat-val" id="ftClips">0</div>
+                <div class="footage-stat-lbl">Clips</div>
+            </div>
+            <div class="footage-stat">
+                <div class="footage-stat-val" id="ftDuration">0s</div>
+                <div class="footage-stat-lbl">Total Duration</div>
+            </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="rewatch-btn" id="rewatchBtn" style="display:none" onclick="rewatchMerged()">
+                <i class="fa-solid fa-rotate-left"></i> Re-watch
+            </button>
+            <button class="merge-action-btn" id="mergeActionBtn" onclick="mergeAndWatch()">
+                <i class="fa-solid fa-circle-play"></i> Merge & Watch All Events
+            </button>
+        </div>
+    </div>
+
+    <!-- EVENT FOOTAGE -->
+    <div class="filter-row">
+        <div class="sec-label mb-0" style="flex:0 0 auto;margin-bottom:0">
+            <i class="fa-solid fa-film"></i> Event Footage
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;flex:1;justify-content:flex-end">
+            <div class="count-badge">Showing <span id="showingCount">0</span> events</div>
+            <input type="text" class="search-box" id="searchBox"
+                   placeholder="Search ID or date…" oninput="renderCards()">
+            <select class="fsel" id="dateSel" onchange="renderCards()">
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+            </select>
+            <select class="fsel" id="threatSel" onchange="renderCards()">
+                <option value="all">All Threats</option>
+                <option value="high">High Only</option>
+                <option value="med">Medium Only</option>
+                <option value="low">Low Only</option>
+            </select>
+            <select class="fsel" id="sortSel" onchange="renderCards()">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="persons">Most Persons</option>
+                <option value="duration">Longest Duration</option>
+                <option value="threat">Highest Threat</option>
+                <option value="motion">Highest Motion</option>
+            </select>
+            <button class="export-btn" onclick="exportCSV()">
+                <i class="fa-solid fa-download"></i> Export CSV
+            </button>
+            <button class="merge-btn" id="mergeBtn" onclick="mergeEvents()">
+                <i class="fa-solid fa-film"></i> Merge All
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-3" id="grid">
+        <div class="col-12 empty">
+            <i class="fa-regular fa-folder-open"></i>
+            <p>No events recorded yet.<br>Run main.py to start surveillance.</p>
+        </div>
+    </div>
+
+</div><!-- /wrap -->
+
+<!-- ── PROFESSIONAL FOOTER ── -->
+<div class="footer-pro z1">
+    <div class="footer-pro-inner">
+        <div class="footer-left">
+            <div class="footer-proj"><i class="fa-solid fa-shield-halved"></i> Adaptive Surveillance Smart Storage System</div>
+            <div class="footer-meta-txt">IEEE Research Project &nbsp;·&nbsp; YOLOv8 + OpenCV + Flask &nbsp;·&nbsp; <span id="lastUpdated">Last updated: —</span></div>
+        </div>
+        <div class="footer-right">
+            <div class="footer-ver">
+                <div class="footer-ver-num">YOLOv8n</div>
+                <div class="footer-ver-lbl">AI Model</div>
+            </div>
+            <div class="footer-ver">
+                <div class="footer-ver-num" style="color:var(--blue)">EIS v1.0</div>
+                <div class="footer-ver-lbl">Algorithm</div>
+            </div>
+            <div class="footer-ver">
+                <div class="footer-ver-num" style="color:var(--purple)">Flask 3.x</div>
+                <div class="footer-ver-lbl">Backend</div>
+            </div>
+            <div class="footer-ver">
+                <div class="footer-ver-num" style="color:var(--teal)">CV2 4.x</div>
+                <div class="footer-ver-lbl">OpenCV</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ── MODAL ── -->
+<div class="modal fade" id="vModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title" id="mTitle">Event</span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <video id="modalVideo" controls></video>
+                <div class="modal-stats"  id="mStats"></div>
+                <div class="modal-stats-2" id="mStats2"></div>
+                <div class="modal-analysis" id="mAnalysis"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MERGED VIDEO MODAL -->
+<div class="modal fade" id="mergedModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:36px;height:36px;border-radius:9px;background:var(--accent-dim);
+                                border:1px solid var(--accent);display:flex;align-items:center;
+                                justify-content:center;color:var(--accent);font-size:.95rem">
+                        <i class="fa-solid fa-film"></i>
+                    </div>
+                    <div>
+                        <div class="modal-title">Complete Surveillance Footage</div>
+                        <div style="font-size:.65rem;color:var(--txt2);margin-top:1px" id="mergedSubTitle">—</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <video id="mergedVideo" controls autoplay></video>
+                <div class="merged-meta" id="mergedMeta"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal fade" id="delModal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title" style="color:var(--red)"><i class="fa-solid fa-trash me-2"></i>Delete Event</span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <p style="font-size:.85rem;color:var(--txt2);margin-bottom:1rem">
+                    Permanently delete <strong id="delEventLabel" style="color:var(--txt)">Event #—</strong>?
+                    This removes the video and metadata.
+                </p>
+                <div style="display:flex;gap:8px;justify-content:flex-end">
+                    <button class="merge-btn" data-bs-dismiss="modal">Cancel</button>
+                    <button class="export-btn" id="delConfirmBtn"
+                            style="background:var(--red-dim);border-color:var(--red);color:var(--red)">
+                        <i class="fa-solid fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let events = [];
+let pChart, dChart, mChart, hChart, tChart, sChart, eisChart, eisDonut;
+let countdown = 30;
+let startTime = Date.now();
+let lastStorageMB = 0;
+let sessionData   = null;
+
+// ── Clock + uptime ──
+function updateClock() {
+    const now = new Date();
+    document.getElementById("liveClock").textContent = now.toLocaleTimeString("en-GB");
+    document.getElementById("liveDate").textContent  = now.toLocaleDateString("en-GB", {
+        weekday:"short", day:"2-digit", month:"short", year:"numeric"
+    });
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const hh = Math.floor(elapsed / 3600).toString().padStart(2,"0");
+    const mm = Math.floor((elapsed % 3600) / 60).toString().padStart(2,"0");
+    const ss = (elapsed % 60).toString().padStart(2,"0");
+    document.getElementById("uptimeTxt").textContent = `${hh}:${mm}:${ss}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Format duration ──
+function fmt(secs) {
+    secs = Math.round(secs);
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    if (h) return `${h}h ${m}m ${s}s`;
+    if (m) return `${m}m ${s}s`;
+    return `${s}s`;
+}
+
+// ── Threat level ──
+function threat(e) {
+    const p = e.Person_Count || 0;
+    const m = e.Motion_Score || 0;
+    if (p >= 3 || m > 300000) return { label:"HIGH", cls:"high", color:"var(--red)",    pill:"ALERT" };
+    if (p >= 1 || m >  80000) return { label:"MED",  cls:"med",  color:"var(--yellow)", pill:"WATCH" };
+    return                           { label:"LOW",  cls:"low",  color:"var(--accent)", pill:"CLEAR" };
+}
+
+// ── Threat score 0–100 ──
+function threatScore(e) {
+    const p = e.Person_Count || 0;
+    const m = e.Motion_Score || 0;
+    return Math.min(100, Math.round(p * 18 + m / 6000));
+}
+
+function threatScoreColor(score) {
+    if (score >= 70) return "var(--red)";
+    if (score >= 35) return "var(--yellow)";
+    return "var(--accent)";
+}
+
+// ── EIS: Event Importance Score (paper formula: EIS = αHC + βMS + γED) ──
+// α=25 (human weight), β=1/4000 (motion normalization), γ=0.5 (duration weight)
+function computeEIS(e) {
+    const hc = e.Person_Count || 0;
+    const ms = e.Motion_Score || 0;
+    const ed = e.Duration     || 0;
+    return Math.min(100, Math.round(25 * hc + ms / 4000 + 0.5 * ed));
+}
+
+function eisCategory(eis) {
+    if (eis >= 60) return { label:"STORE",    color:"var(--accent)", bg:"rgba(0,229,160,0.75)" };
+    if (eis >= 25) return { label:"COMPRESS", color:"var(--yellow)", bg:"rgba(255,215,0,0.75)"  };
+    return              { label:"DISCARD",   color:"var(--red)",    bg:"rgba(255,61,61,0.75)"  };
+}
+
+// ── Peak hour ──
+function peakHourData(ev) {
+    if (!ev.length) return { label:"--", count:0 };
+    const hrs = {};
+    ev.forEach(e => {
+        const h = parseInt((e.Timestamp || "").split(" ")[1]?.split(":")[0] || "0");
+        hrs[h] = (hrs[h] || 0) + 1;
+    });
+    const top = Object.entries(hrs).sort((a,b) => b[1]-a[1])[0];
+    if (!top) return { label:"--", count:0 };
+    const h = parseInt(top[0]);
+    const h12 = h % 12 || 12;
+    return { label:`${h12}${h >= 12 ? "PM" : "AM"}`, count: top[1], hour: h };
+}
+
+// ── Days active ──
+function daysActive(ev) {
+    if (!ev.length) return 0;
+    const dates = new Set(ev.map(e => (e.Timestamp||"").split(" ")[0]).filter(Boolean));
+    return dates.size;
+}
+
+// ── Events today ──
+function eventsToday(ev) {
+    const today = new Date().toISOString().split("T")[0];
+    return ev.filter(e => (e.Timestamp||"").startsWith(today)).length;
+}
+
+// ── Hourly distribution (24 bins) ──
+function hourlyDist(ev) {
+    const bins = Array(24).fill(0);
+    ev.forEach(e => {
+        const h = parseInt((e.Timestamp||"").split(" ")[1]?.split(":")[0] || "0");
+        if (h >= 0 && h < 24) bins[h]++;
+    });
+    return bins;
+}
+
+// ── Threat distribution ──
+function threatDist(ev) {
+    let hi = 0, med = 0, lo = 0;
+    ev.forEach(e => {
+        const t = threat(e).cls;
+        if (t === "high") hi++;
+        else if (t === "med") med++;
+        else lo++;
+    });
+    return [hi, med, lo];
+}
+
+// ── Stats update ──
+function updateStats(ev) {
+    const n     = ev.length;
+    const p     = ev.reduce((a,e) => a + (e.Person_Count||0), 0);
+    const d     = ev.reduce((a,e) => a + (e.Duration    ||0), 0);
+    const am    = n ? Math.round(ev.reduce((a,e) => a + (e.Motion_Score||0), 0) / n) : 0;
+    const maxM  = n ? Math.max(...ev.map(e => e.Motion_Score||0)) : 0;
+    const highN = ev.filter(e => threat(e).cls === "high").length;
+    const da    = daysActive(ev);
+    const todN  = eventsToday(ev);
+    const ph    = peakHourData(ev);
+
+    // Row 1 stat cards
+    document.getElementById("sEvents").textContent     = n;
+    document.getElementById("sEventsDate").textContent = n ? `Since ${(ev[0].Timestamp||"").split(" ")[0]}` : "—";
+    document.getElementById("sPersons").textContent    = p;
+    document.getElementById("sAvgPersons").textContent = `Avg: ${n ? (p/n).toFixed(1) : 0} / event`;
+    document.getElementById("sDuration").textContent   = fmt(d);
+    document.getElementById("sAvgDur").textContent     = `Avg: ${n ? fmt(d/n) : "0s"} / event`;
+    document.getElementById("sMotion").textContent     = am.toLocaleString();
+    document.getElementById("sMotionMax").textContent  = `Max: ${maxM.toLocaleString()}`;
+    document.getElementById("sPeakHour").textContent   = ph.label;
+    document.getElementById("sPeakCount").textContent  = ph.count ? `${ph.count} event(s) at this hour` : "Most events recorded";
+    document.getElementById("sHighThr").textContent    = highN;
+    document.getElementById("sHighThrPct").textContent = `${n ? Math.round(highN/n*100) : 0}% of total`;
+    document.getElementById("sDaysActive").textContent = da;
+    document.getElementById("sDaysRange").textContent  = da > 1 ? `Over ${da} days` : "Active today";
+    document.getElementById("sToday").textContent      = todN;
+    document.getElementById("sTodayPct").textContent   = `${n ? Math.round(todN/n*100) : 0}% of total`;
+
+    // Mini fill bars
+    const fill = (id, pct, cap=100) => {
+        const el = document.getElementById(id);
+        if (el) el.style.width = Math.min(100, Math.round((pct/cap)*100)) + "%";
+    };
+    fill("mfEvents",  n,     Math.max(n,1));
+    fill("mfPersons", p,     Math.max(p,1));
+    fill("mfDur",     d,     Math.max(d,1));
+    fill("mfMotion",  am,    Math.max(maxM,1));
+    fill("mfHighThr", highN, Math.max(n,1));
+    fill("mfDays",    da,    Math.max(da,1));
+    fill("mfToday",   todN,  Math.max(n,1));
+
+    if (n) {
+        document.getElementById("lastEventTime").textContent =
+            ev[ev.length-1].Timestamp || "—";
+    }
+
+    // Chart badges
+    const maxP = n ? Math.max(...ev.map(e=>e.Person_Count||0)) : 0;
+    const maxD = n ? Math.max(...ev.map(e=>e.Duration||0)) : 0;
+    document.getElementById("badgeMaxPersons").textContent = `Max: ${maxP}`;
+    document.getElementById("badgeMaxDur").textContent     = `Max: ${Math.round(maxD)}s`;
+    document.getElementById("badgeAvgMotion").textContent  = `Avg: ${am.toLocaleString()}`;
+    document.getElementById("badgePeakHour").textContent   = `Peak: ${ph.label}`;
+
+    // Threat banner
+    let lvl;
+    if (highN > 0 || maxP >= 3) {
+        lvl = { label:"HIGH",   desc:"High threat detected — Review footage immediately",
+                color:"var(--red)",    pill:"ALERT",
+                bg:"rgba(255,61,61,0.07)",
+                icon:'<i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i>' };
+    } else if (p > 0 || am > 80000) {
+        lvl = { label:"MEDIUM", desc:"Moderate activity detected — Monitoring in progress",
+                color:"var(--yellow)", pill:"WATCH",
+                bg:"rgba(255,215,0,0.05)",
+                icon:'<i class="fa-solid fa-shield-halved" style="color:var(--yellow)"></i>' };
+    } else {
+        lvl = { label:"LOW",    desc:"All systems operational — No significant threats",
+                color:"var(--accent)", pill:"SECURE",
+                bg:"rgba(13,21,38,0.6)",
+                icon:'<i class="fa-solid fa-shield-check" style="color:var(--accent)"></i>' };
+    }
+
+    document.getElementById("threatBanner").style.background = lvl.bg;
+    document.getElementById("threatIcon").innerHTML           = lvl.icon;
+    document.getElementById("threatLabel").textContent        = `Threat Level: ${lvl.label}`;
+    document.getElementById("threatLabel").style.color        = lvl.color;
+    document.getElementById("threatDesc").textContent         = lvl.desc;
+    const pill = document.getElementById("threatPill");
+    pill.textContent      = lvl.pill;
+    pill.style.background = lvl.color + "22";
+    pill.style.border     = `1px solid ${lvl.color}`;
+    pill.style.color      = lvl.color;
+
+    document.getElementById("lastUpdated").textContent =
+        `Last updated: ${new Date().toLocaleTimeString("en-GB")}`;
+
+    // Footage panel
+    document.getElementById("ftClips").textContent   = n;
+    document.getElementById("ftDuration").textContent = fmt(d);
+    const actionBtn = document.getElementById("mergeActionBtn");
+    if (actionBtn && !actionBtn.disabled) {
+        actionBtn.innerHTML = n
+            ? `<i class="fa-solid fa-circle-play"></i> Merge & Watch ${n} Event${n===1?"":"s"}`
+            : `<i class="fa-solid fa-circle-play"></i> Merge & Watch All Events`;
+    }
+
+    // EIS (Event Importance Score) metrics
+    if (n) {
+        const eisScores = ev.map(e => e.EIS || 0);
+        const eisAvgVal   = n ? (ev.reduce((a,e)=>a+(e.EIS||0),0)/n).toFixed(2) : 0;
+        const storeN = ev.filter(e => e.Storage_Decision === "Keep Original").length;
+        const compressN = ev.filter(e => e.Storage_Decision === "Compress").length;
+        const discardN = ev.filter(e => e.Storage_Decision === "Delete").length;
+        const latest = ev.length ? ev[ev.length - 1] : {};
+
+        document.getElementById("eisImportant").textContent    = storeN;
+       document.getElementById("eisImportantPct").textContent = `${Math.round(storeN/n*100)}% — Keep Original`;
+        document.getElementById("eisCompress").textContent     = compressN;
+        document.getElementById("eisCompressPct").textContent = `${Math.round(compressN/n*100)}% — Compress`;
+        document.getElementById("eisAvg").textContent          = eisAvgVal;
+        document.getElementById("avgEIS").textContent = eisAvgVal;
+        document.getElementById("highThreshold").textContent = latest.High_Threshold ?? "--";
+        document.getElementById("lowThreshold").textContent = latest.Low_Threshold ?? "--";
+        document.getElementById("keepCount").textContent = storeN;
+        document.getElementById("compressCount").textContent = compressN;
+        document.getElementById("deleteCount").textContent = discardN;
+        updateEISMeter(eisAvgVal);
+
+        fill("mfImportant", storeN,    n);
+        fill("mfCompress",  compressN, n);
+        fill("mfEIS",       eisAvgVal, 100);
+
+    }
+}
+
+// ── Charts ──
+const baseOpts = {
+    plugins: { legend: { display: false },
+               tooltip: { backgroundColor:"rgba(13,21,38,0.95)", borderColor:"rgba(0,229,160,0.2)",
+                          borderWidth:1, titleColor:"#e8f0fe", bodyColor:"#8b9bb4",
+                          padding:10, cornerRadius:8 } },
+    scales: {
+        x: { ticks:{ color:"#8b9bb4", font:{size:10} }, grid:{ color:"rgba(255,255,255,0.04)" } },
+        y: { ticks:{ color:"#8b9bb4", font:{size:10} }, grid:{ color:"rgba(255,255,255,0.04)" }, beginAtZero:true }
+    },
+    responsive: true
+};
+
+function initCharts() {
+    pChart = new Chart(document.getElementById("personChart").getContext("2d"), {
+        type: "bar",
+        data: { labels:[], datasets:[{
+            data:[], backgroundColor:"rgba(96,165,250,0.7)",
+            borderColor:"#60a5fa", borderWidth:1, borderRadius:4
+        }]},
+        options: { ...baseOpts }
+    });
+
+    dChart = new Chart(document.getElementById("durationChart").getContext("2d"), {
+        type: "bar",
+        data: { labels:[], datasets:[{
+            data:[], backgroundColor:"rgba(0,229,160,0.7)",
+            borderColor:"#00e5a0", borderWidth:1, borderRadius:4
+        }]},
+        options: { ...baseOpts }
+    });
+
+    mChart = new Chart(document.getElementById("motionChart").getContext("2d"), {
+        type: "line",
+        data: { labels:[], datasets:[{
+            data:[], borderColor:"#ffd700",
+            backgroundColor:"rgba(255,215,0,0.1)",
+            borderWidth:2, fill:true, tension:.4,
+            pointRadius:3, pointBackgroundColor:"#ffd700"
+        }]},
+        options: { ...baseOpts }
+    });
+
+    const hourLabels = Array.from({length:24}, (_,i)=>{
+        const h12 = i%12||12; return `${h12}${i>=12?"PM":"AM"}`;
+    });
+    hChart = new Chart(document.getElementById("hourlyChart").getContext("2d"), {
+        type: "bar",
+        data: { labels: hourLabels, datasets:[{
+            data: Array(24).fill(0),
+            backgroundColor: Array.from({length:24},(_,i)=>
+                i>=22||i<6 ? "rgba(168,85,247,0.55)" :
+                i>=6&&i<12 ? "rgba(96,165,250,0.55)" :
+                i>=12&&i<18? "rgba(0,229,160,0.55)" :
+                             "rgba(249,115,22,0.55)"),
+            borderWidth:0, borderRadius:3
+        }]},
+        options: { ...baseOpts, plugins:{
+            ...baseOpts.plugins,
+            tooltip: { ...baseOpts.plugins.tooltip,
+                callbacks:{ label: ctx => ` ${ctx.parsed.y} event(s)` } }
+        }}
+    });
+
+    tChart = new Chart(document.getElementById("threatChart").getContext("2d"), {
+        type: "doughnut",
+        data: {
+            labels: ["High","Medium","Low"],
+            datasets:[{
+                data:[0,0,0],
+                backgroundColor:["rgba(255,61,61,0.8)","rgba(255,215,0,0.8)","rgba(0,229,160,0.8)"],
+                borderColor:["#ff3d3d","#ffd700","#00e5a0"],
+                borderWidth:1
+            }]
+        },
+        options: {
+            responsive:true, cutout:"62%",
+            plugins:{ legend:{display:false},
+                      tooltip:{ ...baseOpts.plugins.tooltip,
+                          callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.parsed}` } } }
+        }
+    });
+
+    sChart = new Chart(document.getElementById("scoreChart").getContext("2d"), {
+        type: "bar",
+        data: { labels:["0-20","21-40","41-60","61-80","81-100"],
+                datasets:[{
+                    data:[0,0,0,0,0],
+                    backgroundColor:[
+                        "rgba(0,229,160,0.7)","rgba(34,211,238,0.7)","rgba(255,215,0,0.7)",
+                        "rgba(249,115,22,0.7)","rgba(255,61,61,0.7)"
+                    ],
+                    borderWidth:0, borderRadius:3
+                }] },
+        options: { ...baseOpts,
+            plugins:{ ...baseOpts.plugins,
+                tooltip:{ ...baseOpts.plugins.tooltip,
+                    callbacks:{label: ctx=>` ${ctx.parsed.y} event(s)`} } } }
+    });
+
+    eisChart = new Chart(document.getElementById("eisChart").getContext("2d"), {
+        type: "bar",
+        data: { labels:[], datasets:[{
+            data: [], backgroundColor: [],
+            borderWidth: 0, borderRadius: 5
+        }]},
+        options: { ...baseOpts,
+            plugins:{ ...baseOpts.plugins,
+                tooltip:{ ...baseOpts.plugins.tooltip,
+                    callbacks:{ label: ctx => {
+                        const cat = eisCategory(ctx.parsed.y);
+                        return ` EIS ${ctx.parsed.y} — ${cat.label}`;
+                    }}
+                },
+                annotation: {
+                    annotations: {
+                        line60: { type:"line", yMin:60, yMax:60, borderColor:"rgba(0,229,160,0.4)", borderWidth:1, borderDash:[4,4] },
+                        line25: { type:"line", yMin:25, yMax:25, borderColor:"rgba(255,215,0,0.4)",  borderWidth:1, borderDash:[4,4] }
+                    }
+                }
+            },
+            scales: { ...baseOpts.scales, y:{ ...baseOpts.scales.y, max:100 } }
+        }
+    });
+
+    eisDonut = new Chart(document.getElementById("eisDonut").getContext("2d"), {
+        type: "doughnut",
+        data: {
+            labels: ["Store (≥60)","Compress (25–59)","Discard (<25)"],
+            datasets:[{
+                data:[0,0,0],
+                backgroundColor:["rgba(0,229,160,0.8)","rgba(255,215,0,0.8)","rgba(255,61,61,0.8)"],
+                borderColor:["#00e5a0","#ffd700","#ff3d3d"],
+                borderWidth:1
+            }]
+        },
+        options:{
+            responsive:true, cutout:"62%",
+            plugins:{ legend:{display:false},
+                      tooltip:{ ...baseOpts.plugins.tooltip,
+                          callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.parsed}` } } }
+        }
+    });
+}
+
+function updateCharts(ev) {
+    const labels = ev.map(e => `#${e.Event_ID}`);
+
+    pChart.data.labels = labels;
+    pChart.data.datasets[0].data = ev.map(e => e.Person_Count||0);
+    pChart.update();
+
+    dChart.data.labels = labels;
+    dChart.data.datasets[0].data = ev.map(e => Math.round(e.Duration||0));
+    dChart.update();
+
+    mChart.data.labels = labels;
+    mChart.data.datasets[0].data = ev.map(e => e.Motion_Score||0);
+    mChart.update();
+
+    hChart.data.datasets[0].data = hourlyDist(ev);
+    hChart.update();
+
+    const [hi,med,lo] = threatDist(ev);
+    tChart.data.datasets[0].data = [hi, med, lo];
+    tChart.update();
+    document.getElementById("threatLegend").innerHTML = `
+        <span><span style="color:var(--red)">●</span> High (${hi})</span>
+        <span><span style="color:var(--yellow)">●</span> Med (${med})</span>
+        <span><span style="color:var(--accent)">●</span> Low (${lo})</span>`;
+
+    const scores = ev.map(e => threatScore(e));
+    const bins = [0,0,0,0,0];
+    scores.forEach(s => { const b = Math.min(4, Math.floor(s/20)); bins[b]++; });
+    sChart.data.datasets[0].data = bins;
+    sChart.update();
+
+    // EIS chart
+    //const eisScores = ev.map(computeEIS);
+    const eisScores = ev.map(e => e.EIS || 0);
+    eisChart.data.labels = labels;
+    eisChart.data.datasets[0].data = eisScores;
+    eisChart.data.datasets[0].backgroundColor = eisScores.map(s => eisCategory(s).bg);
+    eisChart.update();
+    const maxEIS = eisScores.length ? Math.max(...eisScores) : 0;
+    document.getElementById("badgeEISMax").textContent = `Max EIS: ${maxEIS}`;
+
+    // EIS donut
+    const storeN = ev.filter(e => e.Storage_Decision === "Keep Original").length;
+    const compressN = ev.filter(e => e.Storage_Decision === "Compress").length;
+    const discardN = ev.filter(e => e.Storage_Decision === "Delete").length;
+    eisDonut.data.datasets[0].data = [storeN, compressN, discardN];
+    eisDonut.update();
+    document.getElementById("eisLegend").innerHTML = `
+        <span><span style="color:var(--accent)">●</span> Store (${storeN})</span>
+        <span><span style="color:var(--yellow)">●</span> Compress (${compressN})</span>
+        <span><span style="color:var(--red)">●</span> Discard (${discardN})</span>`;
+}
+
+// ── Alerts panel ──
+function renderAlerts(ev) {
+    const panel = document.getElementById("alertsPanel");
+    const high  = ev.filter(e => threat(e).cls === "high").slice(-8).reverse();
+    if (!high.length) {
+        panel.innerHTML = `<div class="no-alerts"><i class="fa-solid fa-shield-check"></i> No high-threat events recorded yet.</div>`;
+        return;
+    }
+    panel.innerHTML = high.map(e => {
+        const ts  = e.Timestamp || "";
+        const pt  = ts.split(" ");
+        const sc  = threatScore(e);
+        return `<div class="alert-chip" onclick="openModal(${e.Event_ID})">
+            <div class="alert-chip-ico"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div>
+                <div class="alert-chip-id">EVT #${e.Event_ID} &nbsp;·&nbsp; Score ${sc}</div>
+                <div class="alert-chip-time">${pt[1]||"--"} &nbsp; ${pt[0]||""}</div>
+                <div class="alert-chip-info">${e.Person_Count||0} person(s) · ${fmt(e.Duration||0)}</div>
+            </div>
+        </div>`;
+    }).join("");
+}
+
+// ── Filter + sort ──
+function filteredEvents() {
+    let ev = [...events];
+
+    const q = document.getElementById("searchBox").value.toLowerCase().trim();
+    if (q) ev = ev.filter(e =>
+        String(e.Event_ID).includes(q) ||
+        (e.Timestamp||"").toLowerCase().includes(q));
+
+    const df    = document.getElementById("dateSel").value;
+    const today = new Date().toISOString().split("T")[0];
+    if (df === "today") {
+        ev = ev.filter(e => (e.Timestamp||"").startsWith(today));
+    } else if (df === "week") {
+        const w = new Date(Date.now()-7*24*60*60*1000).toISOString().split("T")[0];
+        ev = ev.filter(e => (e.Timestamp||"") >= w);
+    }
+
+    const tf = document.getElementById("threatSel").value;
+    if (tf !== "all") ev = ev.filter(e => threat(e).cls === tf);
+
+    const v = document.getElementById("sortSel").value;
+    if (v === "newest")   ev.sort((x,y) => y.Event_ID     - x.Event_ID);
+    if (v === "oldest")   ev.sort((x,y) => x.Event_ID     - y.Event_ID);
+    if (v === "persons")  ev.sort((x,y) => y.Person_Count - x.Person_Count);
+    if (v === "duration") ev.sort((x,y) => y.Duration     - x.Duration);
+    if (v === "motion")   ev.sort((x,y) => (y.Motion_Score||0)-(x.Motion_Score||0));
+    if (v === "threat") {
+        const sc = e => { const t = threat(e); return t.cls==="high"?2:t.cls==="med"?1:0; };
+        ev.sort((x,y) => sc(y)-sc(x));
+    }
+    return ev;
+}
+
+// ── Render cards ──
+function renderCards() {
+    const grid = document.getElementById("grid");
+    const ev   = filteredEvents();
+    document.getElementById("showingCount").textContent = ev.length;
+
+    if (!ev.length) {
+        grid.innerHTML = `<div class="col-12 empty">
+            <i class="fa-regular fa-folder-open"></i>
+            <p>No events found.<br>Try adjusting filters or run main.py to record events.</p>
+        </div>`;
+        return;
+    }
+
+    const maxM   = Math.max(...ev.map(e => e.Motion_Score||1));
+    const maxSc  = Math.max(...ev.map(e => threatScore(e)), 1);
+
+    grid.innerHTML = ev.map(e => {
+        const pct  = Math.min(100, Math.round(((e.Motion_Score||0)/maxM)*100));
+        const sc   = threatScore(e);
+        const scPct= Math.round((sc/100)*100);
+        const ts   = e.Timestamp || "";
+        const pt   = ts.split(" ");
+        const thr  = threat(e);
+        const pl   = (e.Person_Count||0) !== 1 ? "s" : "";
+        const scCol = threatScoreColor(sc);
+
+        return `
+        <div class="col-sm-6 col-lg-4 col-xl-3">
+            <div class="event-card thr-${thr.cls}" onclick="openModal(${e.Event_ID})">
+                <div class="vid-wrap">
+                    <video src="/video/event_${e.Event_ID}.mp4" muted preload="metadata"></video>
+                    <div class="evt-badge">EVT #${e.Event_ID}</div>
+                    <div class="thr-badge ${thr.cls}">${thr.label}</div>
+                    <div class="play-overlay"><i class="fa-solid fa-circle-play"></i></div>
+                    <div class="del-overlay" onclick="confirmDelete(event,${e.Event_ID})">
+                        <i class="fa-solid fa-trash"></i>
+                    </div>
+                </div>
+                <div class="evt-meta">
+                    <div class="evt-top">
+                        <div>
+                            <div class="evt-time">${pt[1]||"--"}</div>
+                            <div class="evt-date">${pt[0]||"--"}</div>
+                        </div>
+                        <span class="evt-score-pill" style="background:${scCol}22;border-color:${scCol};color:${scCol}">
+                            Score ${sc}
+                        </span>
+                    </div>
+                    <div class="evt-stats">
+                        <div class="e-stat c-blue">
+                            <i class="fa-solid fa-person"></i>
+                            <span>${e.Person_Count||0} Person${pl}</span>
+                        </div>
+                        <div class="e-stat c-green">
+                            <i class="fa-solid fa-clock"></i>
+                            <span>${fmt(e.Duration||0)}</span>
+                        </div>
+                        <div class="e-stat c-yellow">
+                            <i class="fa-solid fa-wave-square"></i>
+                            <span>${(e.Motion_Score||0).toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <div class="threat-score-row">
+                        <div class="threat-score-lbl">
+                            <span>Threat Score</span><span style="color:${scCol}">${sc}/100</span>
+                        </div>
+                        <div class="threat-bg">
+                            <div class="threat-fill" style="width:${scPct}%;background:${scCol}"></div>
+                        </div>
+                    </div>
+                    <div class="motion-bg">
+                        <div class="motion-fill" style="width:${pct}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join("");
+}
+
+// ── Modal ──
+function openModal(id) {
+    const e = events.find(x => x.Event_ID === id);
+    if (!e) return;
+    const thr = threat(e);
+    const sc  = threatScore(e);
+    const scCol = threatScoreColor(sc);
+    const ts  = e.Timestamp || "";
+    const parts = ts.split(" ");
+    const dtObj = parts[0] ? new Date(parts[0]) : null;
+    const dow   = dtObj ? dtObj.toLocaleDateString("en-GB",{weekday:"long"}) : "—";
+    const hNum  = parseInt((parts[1]||"00").split(":")[0]);
+    const tod   = hNum >= 18 ? "Evening" : hNum >= 12 ? "Afternoon" : hNum >= 6 ? "Morning" : "Night";
+    const now   = new Date();
+    const evDate= dtObj ? dtObj : now;
+    const daysAgo = Math.floor((now - evDate) / 86400000);
+    const daysAgoStr = daysAgo === 0 ? "Today" : daysAgo === 1 ? "Yesterday" : `${daysAgo}d ago`;
+
+    document.getElementById("mTitle").innerHTML =
+        `Event #${e.Event_ID} &nbsp;
+         <span style="font-size:.7rem;color:${thr.color};font-weight:700">${thr.label}</span>
+         &nbsp;<span style="font-size:.72rem;color:var(--txt2)">${ts}</span>`;
+    const mv = document.getElementById("modalVideo");
+    mv.src = `/video/event_${e.Event_ID}.mp4`;
+    mv.load();
+
+    document.getElementById("mStats").innerHTML = `
+        <div class="m-stat">
+            <div class="m-val">${e.Event_ID}</div>
+            <div class="m-lbl">Event ID</div>
+        </div>
+        <div class="m-stat">
+            <div class="m-val" style="color:var(--blue)">${e.Person_Count||0}</div>
+            <div class="m-lbl">Persons</div>
+        </div>
+        <div class="m-stat">
+            <div class="m-val">${fmt(e.Duration||0)}</div>
+            <div class="m-lbl">Duration</div>
+        </div>
+        <div class="m-stat">
+            <div class="m-val" style="color:var(--yellow);font-size:.85rem">
+                ${(e.Motion_Score||0).toLocaleString()}</div>
+            <div class="m-lbl">Motion Score</div>
+        </div>
+        <div class="m-stat">
+            <div class="m-val" style="color:${thr.color};font-size:.85rem">${thr.label}</div>
+            <div class="m-lbl">Threat Level</div>
+        </div>`;
+
+    document.getElementById("mStats2").innerHTML = `
+        <div class="m-stat">
+            <div class="m-val" style="color:${scCol}">${sc}</div>
+            <div class="m-lbl">Threat Score</div>
+        </div>
+        <div class="m-stat">
+            <div class="m-val" style="font-size:.85rem">${dow}</div>
+            <div class="m-lbl">Day of Week</div>
+        </div>
+        <div class="m-stat">
+            <div class="m-val" style="font-size:.85rem">${tod}</div>
+            <div class="m-lbl">Time of Day</div>
+        </div>
+        <div class="m-stat">
+            <div class="m-val" style="color:var(--teal);font-size:.85rem">${daysAgoStr}</div>
+            <div class="m-lbl">Recorded</div>
+        </div>
+        <div class="m-stat">
+            <div class="m-val" style="font-size:.85rem">${parts[1]||"--"}</div>
+            <div class="m-lbl">Time</div>
+        </div>`;
+
+    const maxM = Math.max(...events.map(e=>e.Motion_Score||0), 1);
+    const maxP = Math.max(...events.map(e=>e.Person_Count||0), 1);
+    const motPct = Math.round(((e.Motion_Score||0)/maxM)*100);
+    const perPct = Math.round(((e.Person_Count||0)/maxP)*100);
+    const durPct = Math.round(((e.Duration||0)/Math.max(...events.map(e=>e.Duration||0),1))*100);
+    const scrPct = sc;
+
+    document.getElementById("mAnalysis").innerHTML = `
+        <div class="anal-head"><i class="fa-solid fa-chart-line me-2"></i>Event Analysis</div>
+        <div class="anal-row">
+            <span class="anal-key">Motion Score</span>
+            <div class="anal-bar-wrap"><div class="anal-bar-fill" style="width:${motPct}%;background:var(--yellow)"></div></div>
+            <span class="anal-val">${(e.Motion_Score||0).toLocaleString()}</span>
+        </div>
+        <div class="anal-row">
+            <span class="anal-key">Person Count</span>
+            <div class="anal-bar-wrap"><div class="anal-bar-fill" style="width:${perPct}%;background:var(--blue)"></div></div>
+            <span class="anal-val">${e.Person_Count||0}</span>
+        </div>
+        <div class="anal-row">
+            <span class="anal-key">Duration</span>
+            <div class="anal-bar-wrap"><div class="anal-bar-fill" style="width:${durPct}%;background:var(--accent)"></div></div>
+            <span class="anal-val">${fmt(e.Duration||0)}</span>
+        </div>
+        <div class="anal-row">
+            <span class="anal-key">Threat Score</span>
+            <div class="anal-bar-wrap"><div class="anal-bar-fill" style="width:${scrPct}%;background:${scCol}"></div></div>
+            <span class="anal-val">${sc}/100</span>
+        </div>`;
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("vModal")).show();
+}
+
+document.getElementById("vModal").addEventListener("hidden.bs.modal", () => {
+    const v = document.getElementById("modalVideo");
+    v.pause(); v.src = "";
+});
+
+// ── Delete ──
+let _delId = null;
+function confirmDelete(ev, id) {
+    ev.stopPropagation();
+    _delId = id;
+    document.getElementById("delEventLabel").textContent = `Event #${id}`;
+    new bootstrap.Modal(document.getElementById("delModal")).show();
+}
+
+document.getElementById("delConfirmBtn").addEventListener("click", async () => {
+    if (_delId === null) return;
+    const id = _delId;
+    bootstrap.Modal.getInstance(document.getElementById("delModal")).hide();
+    try {
+        const r = await fetch(`/api/delete/${id}`, { method:"DELETE" });
+        const res = await r.json();
+        if (res.status === "ok") {
+            toast(`Event #${id} deleted`, true);
+            await fetchData();
+        } else {
+            toast("Delete failed", false);
+        }
+    } catch(e) {
+        toast("Delete error: " + e.message, false);
+    }
+    _delId = null;
+});
+
+// ── Fetch ──
+async function fetchData() {
+    try {
+        const r = await fetch("/api/events");
+        const data = await r.json();
+
+        events = data.events;      // Array
+        summary = data.summary;    // Summary object
+
+        updateStats(events, summary);
+        updateCharts(events);
+        renderAlerts(events);
+        renderCards();
+        updateAIPanel(events, summary);
+        renderTimeline(events);
+
+        fetchStorage();
+        fetchSession();
+    } catch(e) { console.error(e); }
+}
+
+async function fetchStorage() {
+    try {
+        const r   = await fetch("/api/storage");
+        const res = await r.json();
+        const mb = res.StorageAfter;
+        const displayVal = mb >= 1024 ? `${(mb/1024).toFixed(2)} GB` : `${mb} MB`;
+
+        // System status bar (inline)
+        document.getElementById("storageTxt").textContent = displayVal;
+
+        // Storage panel — main value
+        document.getElementById("storagePanelVal").textContent = displayVal;
+        document.getElementById("storageUsedLbl").textContent  = `${displayVal} used`;
+
+        lastStorageMB = mb;
+        updateSavingsPanel();
+
+        // Clip count + avg per clip
+        const n   = events.length;
+        const avg = n > 0 ? (mb / n).toFixed(1) : null;
+        document.getElementById("storageClips").textContent = n;
+        document.getElementById("storageAvg").textContent   = avg ? `${avg} MB` : "— MB";
+
+        // Progress bar (relative to 10 GB cap)
+        const capMb = 10240;
+        const pct   = Math.min(100, Math.round((mb / capMb) * 100));
+        const color = pct >= 80 ? "var(--red)" : pct >= 50 ? "var(--yellow)" : "var(--teal)";
+        const status = pct >= 80 ? "FULL" : pct >= 50 ? "HIGH" : "OK";
+
+        document.getElementById("storagePct").textContent            = `${pct}%`;
+        document.getElementById("storagePct").style.color            = color;
+        document.getElementById("storageBarFill").style.width        = `${pct}%`;
+        document.getElementById("storageBarFill").style.background   = color;
+        document.getElementById("storagePanelVal").style.color       = color;
+        document.getElementById("storageStatus").textContent         = status;
+        document.getElementById("storageStatus").style.color         = color;
+        document.getElementById("storageClips").style.color          = color;
+        document.getElementById("storageAvg").style.color            = color;
+    } catch(_) {}
+}
+
+// ── Auto-refresh countdown ──
+setInterval(() => {
+    countdown--;
+    document.getElementById("refreshTxt").textContent = `${countdown}s`;
+    if (countdown <= 0) { fetchData(); fetchStorage(); countdown = 30; }
+}, 1000);
+
+// ── Export CSV ──
+function exportCSV() {
+    if (!events.length) { toast("No data to export", false); return; }
+    const cols = ["Event_ID","Timestamp","Duration","Person_Count","Motion_Score"];
+    const rows = events.map(e => cols.map(c => e[c]??'').join(","));
+    const blob = new Blob([[cols.join(","), ...rows].join("\n")], { type:"text/csv" });
+    const a    = Object.assign(document.createElement("a"), {
+        href: URL.createObjectURL(blob),
+        download: `surveillance_${new Date().toISOString().split("T")[0]}.csv`
+    });
+    a.click();
+    toast("CSV exported!", true);
+}
+
+// ── Toast ──
+function toast(msg, ok = true) {
+    const wrap = document.getElementById("toastWrap");
+    const el   = document.createElement("div");
+    el.className   = "toast-item " + (ok ? "toast-ok" : "toast-err");
+    el.textContent = msg;
+    wrap.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+}
+
+// ── Merged video modal ──
+let _lastMergedFile = null;
+
+function openMergedModal(filename, clipCount, totalDur) {
+    _lastMergedFile = filename;
+    const ts = filename.replace("merged_","").replace(".mp4","");
+    const y=ts.slice(0,4), mo=ts.slice(4,6), d=ts.slice(6,8),
+          h=ts.slice(9,11), mi=ts.slice(11,13), s=ts.slice(13,15);
+    const dateStr = `${d}/${mo}/${y} at ${h}:${mi}:${s}`;
+    document.getElementById("mergedSubTitle").textContent =
+        `${clipCount} clips merged · Generated ${dateStr}`;
+    document.getElementById("mergedVideo").src = `/video/${filename}`;
+    document.getElementById("mergedMeta").innerHTML = `
+        <div class="merged-meta-item">
+            <i class="fa-solid fa-film"></i>
+            <span>Clips merged:</span><strong>${clipCount}</strong>
+        </div>
+        <div class="merged-meta-item">
+            <i class="fa-solid fa-clock"></i>
+            <span>Total duration:</span><strong>${totalDur}</strong>
+        </div>
+        <div class="merged-meta-item">
+            <i class="fa-solid fa-calendar"></i>
+            <span>Generated:</span><strong>${dateStr}</strong>
+        </div>
+        <div class="merged-meta-item">
+            <i class="fa-solid fa-file-video"></i>
+            <span>File:</span><strong>${filename}</strong>
+        </div>`;
+
+    const rewatchBtn = document.getElementById("rewatchBtn");
+    rewatchBtn.style.display = "flex";
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("mergedModal")).show();
+}
+
+document.getElementById("mergedModal").addEventListener("hidden.bs.modal", () => {
+    const v = document.getElementById("mergedVideo");
+    v.pause(); v.src = "";
+});
+
+async function rewatchMerged() {
+    if (!_lastMergedFile) {
+        const r = await fetch("/api/latest-merged");
+        const res = await r.json();
+        if (!res.file) { toast("No merged footage found. Click Merge & Watch first.", false); return; }
+        _lastMergedFile = res.file;
+    }
+    const totalDur = fmt(events.reduce((a,e) => a+(e.Duration||0), 0));
+    openMergedModal(_lastMergedFile, events.length, totalDur);
+}
+
+// ── Merge & Watch (main action) ──
+async function mergeAndWatch() {
+    if (!events.length) { toast("No events to merge", false); return; }
+    const actionBtn = document.getElementById("mergeActionBtn");
+    const oldLabel  = actionBtn.innerHTML;
+    actionBtn.disabled = true;
+    actionBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Merging ${events.length} clips…`;
+    try {
+        const r   = await fetch("/api/merge", { method:"POST" });
+        const res = await r.json();
+        if (res.status === "ok") {
+            const totalDur = fmt(events.reduce((a,e) => a+(e.Duration||0), 0));
+            toast(`Merged ${res.count} clips → ready to watch!`, true);
+            openMergedModal(res.file, res.count, totalDur);
+        } else {
+            toast(res.message || "Merge failed", false);
+        }
+    } catch(e) {
+        toast("Merge error: " + e.message, false);
+    }
+    actionBtn.disabled = false;
+    actionBtn.innerHTML = oldLabel;
+}
+
+// ── Merge (filter-bar button, kept for compat) ──
+async function mergeEvents() { await mergeAndWatch(); }
+
+// ── NEW: Live overlay clock ──
+(function tickOverlay() {
+    const el = document.getElementById("liveOverlayTime");
+    if (el) el.textContent = new Date().toLocaleTimeString("en-GB");
+    setTimeout(tickOverlay, 1000);
+})();
+
+// ── NEW: Update AI panel from latest event ──
+function updateAIPanel(ev) {
+    if (!ev.length) return;
+    const last = ev[ev.length - 1];
+    const thr  = threat(last);
+    const eis  = computeEIS(last);
+
+    const $ = id => document.getElementById(id);
+    if ($("aiPersons")) { $("aiPersons").textContent = last.Person_Count || 0; }
+    if ($("aiMotion"))  { $("aiMotion").textContent  = (last.Motion_Score || 0).toLocaleString(); }
+    if ($("aiConf"))    { $("aiConf").textContent    = last.Person_Count > 0 ? "≥45% (Day)" : "—"; }
+    if ($("aiThreat"))  { $("aiThreat").textContent  = thr.label; $("aiThreat").style.color = thr.color; }
+    if ($("aiRec"))     { $("aiRec").textContent     = last.Duration > 0 ? `SAVED ${Math.round(last.Duration)}s` : "STANDBY"; }
+    if ($("aiEIS"))     { $("aiEIS").textContent     = eis; $("aiEIS").style.color = eis >= 60 ? "var(--accent)" : eis >= 25 ? "var(--yellow)" : "var(--red)"; }
+    if ($("aiLastTs"))  { $("aiLastTs").textContent  = last.Timestamp || "—"; }
+}
+
+// ── NEW: EIS score meter ──
+function updateEISMeter(eisAvg) {
+    const fill = document.getElementById("eisMeterFill");
+    const val  = document.getElementById("eisMeterVal");
+    if (!fill || !val) return;
+    const color = eisAvg >= 60 ? "var(--accent)" : eisAvg >= 25 ? "var(--yellow)" : "var(--red)";
+    fill.style.width      = Math.min(100, eisAvg) + "%";
+    fill.style.background = color;
+    val.textContent       = eisAvg;
+    val.style.color       = color;
+}
+
+// ── NEW: Detection timeline ──
+function renderTimeline(ev) {
+    const wrap = document.getElementById("timelinePanel");
+    if (!wrap) return;
+    const last5 = [...ev].reverse().slice(0, 5);
+    if (!last5.length) {
+        wrap.innerHTML = `<div class="tl-empty"><i class="fa-regular fa-clock"></i> No events recorded yet.</div>`;
+        return;
+    }
+    wrap.innerHTML = last5.map((e, i) => {
+        const thr  = threat(e);
+        const eis  = computeEIS(e);
+        const eisC = eisCategory(eis);
+        const ts   = (e.Timestamp || "").split(" ");
+        const dotC = thr.cls === "high" ? "high" : thr.cls === "med" ? "med" : "";
+        const tagC = thr.cls === "high" ? "r" : thr.cls === "med" ? "y" : "";
+        return `<div class="tl-event">
+            <div class="tl-spine">
+                <div class="tl-dot ${dotC}"></div>
+                ${i < last5.length - 1 ? '<div class="tl-line"></div>' : ''}
+            </div>
+            <div class="tl-content">
+                <div class="tl-time">Event #${e.Event_ID} &nbsp;·&nbsp; ${ts[1] || "--"}</div>
+                <div class="tl-desc">${e.Person_Count || 0} person(s) · ${fmt(e.Duration || 0)} · Motion ${(e.Motion_Score || 0).toLocaleString()}</div>
+                <div class="tl-tags">
+                    <span class="tl-tag ${tagC}">${thr.label}</span>
+                    <span class="tl-tag" style="background:${eisC.color}15;color:${eisC.color};border-color:${eisC.color}33">EIS ${eis} · ${eisC.label}</span>
+                </div>
+            </div>
+        </div>`;
+    }).join("");
+}
+
+// ── NEW: System health simulation ──
+function simulateHealth() {
+    const cpu = Math.round(12 + Math.random() * 28);
+    const ram = Math.round(38 + Math.random() * 22);
+    const fps = Math.round(17 + Math.random() * 5);
+
+    const setCard = (valId, barId, subId, val, max, unit, color, sub) => {
+        const vEl = document.getElementById(valId);
+        const bEl = document.getElementById(barId);
+        const sEl = document.getElementById(subId);
+        if (vEl) vEl.textContent = val + unit;
+        if (bEl) { bEl.style.width = Math.round(val / max * 100) + "%"; bEl.style.background = color; }
+        if (sEl && sub) sEl.textContent = sub;
+    };
+
+    const cpuColor = cpu > 70 ? "var(--red)" : cpu > 45 ? "var(--yellow)" : "var(--accent)";
+    const ramColor = ram > 80 ? "var(--red)" : ram > 60 ? "var(--yellow)" : "var(--blue)";
+
+    setCard("hCpuVal", "hCpuBar", "hCpuSub", cpu, 100, "%", cpuColor, `${cpu}% utilized`);
+    setCard("hRamVal", "hRamBar", "hRamSub", ram, 100, "%", ramColor, `${ram}% utilized`);
+    setCard("hFpsVal", "hFpsBar", "hFpsSub", fps, 30, " FPS", "var(--teal)", `${fps}/30 target`);
+
+    const mb = lastStorageMB;
+    const dEl = document.getElementById("hDiskVal");
+    const dBar = document.getElementById("hDiskBar");
+    const dSub = document.getElementById("hDiskSub");
+    if (dEl) dEl.textContent = mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb.toFixed(0)} MB`;
+    if (dBar) { dBar.style.width = Math.min(100, Math.round(mb / 10240 * 100)) + "%"; dBar.style.background = "var(--purple)"; }
+    if (dSub) dSub.textContent = `${Math.round(mb / 10240 * 100)}% of 10 GB`;
+}
+setInterval(simulateHealth, 4000);
+simulateHealth();
+
+// ── Session fetch & Savings Panel ──
+async function fetchSession() {
+    try {
+        const r = await fetch("/api/session");
+        sessionData = await r.json();
+        updateSavingsPanel();
+    } catch(_) {}
+}
+
+function updateSavingsPanel() {
+    const $$ = id => document.getElementById(id);
+    const setW = (id, pct) => { const el = $$(id); if (el) el.style.width = Math.min(100, Math.max(0, Math.round(pct))) + "%"; };
+    const fmtS = s => {
+        s = Math.round(s);
+        const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+        if (h) return `${h}h ${m}m`;
+        if (m) return `${m}m ${sec}s`;
+        return `${sec}s`;
+    };
+
+    let monSec = 0, recSec = 0, hasSession = false;
+
+    if (sessionData && sessionData.available) {
+        monSec = sessionData.last_monitoring_sec || 0;
+        recSec = sessionData.last_recorded_sec   || 0;
+        hasSession = true;
+    } else if (events.length > 0) {
+        // Fallback: estimate span from event timestamps
+        recSec = events.reduce((s, e) => s + (e.Duration || 0), 0);
+        const first = new Date((events[0].Timestamp || "").replace(" ", "T"));
+        const last  = new Date((events[events.length - 1].Timestamp || "").replace(" ", "T"));
+        monSec = Math.max(recSec, (last - first) / 1000 + (events[events.length - 1].Duration || 0));
+    }
+
+    if (monSec <= 0) return;
+
+    const timeSavedPct = Math.max(0, Math.round((1 - recSec / monSec) * 100));
+    const recPct       = Math.min(100, Math.round((recSec / monSec) * 100));
+
+    if ($$("svMonTime"))      $$("svMonTime").textContent      = fmtS(monSec);
+    if ($$("svRecTime"))      $$("svRecTime").textContent      = fmtS(recSec);
+    if ($$("svTimeSaved"))    $$("svTimeSaved").textContent    = `${timeSavedPct}%`;
+    if ($$("svStorageSaved")) $$("svStorageSaved").textContent = `~${timeSavedPct}%`;
+    if ($$("svBarFill"))      $$("svBarFill").style.width      = `${recPct}%`;
+    if ($$("svRecPct"))       $$("svRecPct").textContent       = `${recPct}%`;
+    if ($$("savingsSubtitle")) $$("savingsSubtitle").textContent = hasSession
+        ? `Last session: ${sessionData.last_session_start} → ${sessionData.last_session_end}`
+        : "Estimated from event timestamps — run main.py for exact figures";
+
+    // Update the Storage Comparison row + mini bars with correct numbers
+    if (lastStorageMB > 0 && recSec > 0) {
+        const contMB   = lastStorageMB * (monSec / recSec);
+        const origDisp = contMB >= 1024 ? `${(contMB / 1024).toFixed(2)} GB` : `${Math.round(contMB)} MB`;
+        const optDisp  = lastStorageMB >= 1024 ? `${(lastStorageMB / 1024).toFixed(2)} GB` : `${lastStorageMB.toFixed(1)} MB`;
+
+        if ($$("storageSaved"))        $$("storageSaved").textContent        = `${timeSavedPct}%`;
+        if ($$("storageSavedDesc"))    $$("storageSavedDesc").textContent    = `Saved vs ${origDisp} continuous`;
+        if ($$("origStorageVal"))      $$("origStorageVal").textContent      = origDisp;
+        if ($$("optStorageVal"))       $$("optStorageVal").textContent       = optDisp;
+        if ($$("storageSavedBig"))     $$("storageSavedBig").textContent     = `${timeSavedPct}%`;
+        if ($$("storageSavedBigDesc")) $$("storageSavedBigDesc").textContent = `${origDisp} → ${optDisp}`;
+
+        setW("mfSaved",    timeSavedPct);
+        setW("mfOrig",     100);
+        setW("mfOpt",      Math.round(lastStorageMB / contMB * 100));
+        setW("mfSavedBig", timeSavedPct);
+    }
+}
+
+// ── Boot ──
+initCharts();
+fetchData();
+fetchStorage();
+fetchSession();
+// Show re-watch button if a merged file already exists
+fetch("/api/latest-merged").then(r=>r.json()).then(res=>{
+    if (res.file) {
+        _lastMergedFile = res.file;
+        document.getElementById("rewatchBtn").style.display = "flex";
+    }
+}).catch(()=>{});
+</script>
+</body>
+</html>
