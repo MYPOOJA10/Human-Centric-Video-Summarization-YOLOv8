@@ -137,7 +137,7 @@ Adaptive_Surveillance_Project_New/
 Clone the repository:
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/MYPOOJA10/Human-Centric-Video-Summarization-YOLOv8.git
 cd Human-Centric-Video-Summarization-YOLOv8
 ```
 
